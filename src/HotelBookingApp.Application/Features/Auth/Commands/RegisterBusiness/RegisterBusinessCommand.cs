@@ -3,6 +3,7 @@ using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.AuthDto;
 using HotelBookingApp.Application.Wrapper;
+using HotelBookingApp.Domain.Models;
 using HotelBookingApp.Infrastructure;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -42,53 +43,62 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
 
         public async Task<Response<AuthResponseDto>> Handle(RegisterBusinessCommand request, CancellationToken cancellationToken)
         {
+            // 1. Kiểm tra Email tồn tại
             var emailExists = await _context.Users.AnyAsync(u => u.Email == request.RepresentativeEmail, cancellationToken);
             if (emailExists)
             {
                 throw new ApiException("Email làm việc này đã được đăng ký trong hệ thống giám sát.");
             }
 
-            // Tạo bản ghi User cơ sở với quyền hệ thống là 'partner'
+            // 2. Lấy Role 'partner'
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "partner", cancellationToken);
             if (role == null) throw new ApiException("Hệ thống chưa thiết lập Role 'partner' trong CSDL.");
 
+            // 3. Khởi tạo User (Chủ doanh nghiệp)
+            var userId = Guid.NewGuid();
             var user = new User
             {
-                Id = Guid.NewGuid(),
-                Username = request.BusinessName,
+                Id = userId,
+                Username = request.BusinessName, // Lưu ý: Username phải unique, nếu trùng tên Business sẽ lỗi, có thể cân nhắc dùng Email làm Username như bên RegisterUser
                 Email = request.RepresentativeEmail,
+                FullName = request.RepresentativeName, // Bổ sung FullName bắt buộc từ Entity User
                 Phone = request.RepresentativePhone,
                 PasswordHash = _passwordHasher.HashPasswordEnhanced(request.Password),
-                RoleId = role.Id, // Gán phân quyền Partner phục vụ cho thiết kế PartnerLayout định sẵn
+                RoleId = role.Id,
+                IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            user.Role = role;
-            /* 💡 GỢI Ý PHÁT TRIỂN KIẾN TRÚC CHO LUẬN VĂN THÀNH CÔNG:
-               Để lưu trữ trọn vẹn các trường mở rộng (TaxCode, BusinessAddress, RepresentativeName, Position), bạn nên:
-               - Cách 1: Thêm các cột tương ứng vào thực thể `User` tại lớp Domain và tạo Migration mới.
-               - Cách 2: Tạo một thực thể độc lập tên là `BusinessProfile` liên kết khóa ngoại 1-1 tới bảng `User`.
-               
-               Khi bạn đã cập nhật cấu trúc cơ sở dữ liệu theo một trong hai cách trên, hãy viết bổ sung logic nạp dữ liệu tại đây:
-               VD (Theo cách 1):
-               user.TaxCode = request.TaxCode;
-               user.BusinessAddress = request.BusinessAddress;
-            */
+            // 4. Khởi tạo Business (Hồ sơ doanh nghiệp)
+            var business = new Business
+            {
+                Id = Guid.NewGuid(),
+                OwnerId = userId, // Liên kết 1-1 qua khóa ngoại
+                BusinessName = request.BusinessName,
+                TaxCode = request.TaxCode,
+                BusinessAddress = request.BusinessAddress,
+                RepresentativeName = request.RepresentativeName,
+                Position = request.Position,
+                VerificationStatus = "Pending" // Chờ Admin duyệt nếu cần
+            };
 
+            // 5. Sinh Token
             string accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
             string refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified);
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
+            // 6. Lưu vào DB (EF Core sẽ tự động bọc trong Transaction)
             _context.Users.Add(user);
+            _context.Businesses.Add(business);
             await _context.SaveChangesAsync(cancellationToken);
 
             var responseData = new AuthResponseDto
             {
                 UserId = user.Id.ToString(),
-                FullName = user.Username,
+                FullName = user.FullName, // Trả về FullName hợp lý hơn Username
                 Email = user.Email,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken

@@ -34,7 +34,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.Login
                 Include(u => u.Role).
                 FirstOrDefaultAsync(u => u.Username == request.UsernameOrEmail || u.Email == request.UsernameOrEmail, cancellationToken);
 
-            if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
+            if (user == null || !_passwordHasher.VerifyPasswordEnhanced(request.Password, user.PasswordHash))
             {
                 throw new ApiException("Tài khoản hoặc mật khẩu không chính xác.");
             }
@@ -43,7 +43,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.Login
             string? refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified);
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
             await _context.SaveChangesAsync(cancellationToken);
 
             AuthResponseDto? responseData = new AuthResponseDto

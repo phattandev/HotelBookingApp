@@ -47,6 +47,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterUser
                 Id = Guid.NewGuid(),
                 Username = request.Email, // Đặt Email làm Username để đồng bộ luồng Đăng nhập
                 Email = request.Email,
+                FullName = request.Email.Split('@')[0],
                 PasswordHash = _passwordHasher.HashPasswordEnhanced(request.Password),
                 Phone = string.Empty,
                 RoleId = role.Id, // Phân quyền mặc định cho khách hàng vãng lai
@@ -61,7 +62,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterUser
             string refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
             user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified);
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync(cancellationToken);
