@@ -1,19 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using HotelBookingApp.Domain.Models;
 
 namespace HotelBookingApp.Infrastructure;
 
-public partial class Hotel
+[Table("hotels")]
+public class Hotel
 {
-    public long Id { get; set; }
+    [Key]
+    [Column("id")]
+    public Guid Id { get; set; }
 
-    public int WardId { get; set; }
+    [Required]
+    [Column("business_id")]
+    public Guid BusinessId { get; set; }
 
+    [Required]
+    [MaxLength(200)]
+    [Column("name")]
     public string Name { get; set; } = null!;
 
-    public virtual ICollection<HotelAmenity> HotelAmenities { get; set; } = new List<HotelAmenity>();
+    [Required]
+    [MaxLength(255)]
+    [Column("address_line")]
+    public string AddressLine { get; set; } = null!;
 
+    [Required]
+    [Column("ward_id")]
+    public Guid WardId { get; set; }
+
+    [Required]
+    [MaxLength(20)]
+    [Column("approval_status")]
+    public string ApprovalStatus { get; set; } = "Pending";
+
+    [Column("is_active")]
+    public bool IsActive { get; set; } = false;
+
+    // --- Navigation Properties ---
+    [ForeignKey(nameof(BusinessId))]
+    public virtual Business Business { get; set; } = null!;
+
+    [ForeignKey(nameof(WardId))]
+    public virtual Ward Ward { get; set; } = null!;
+
+    [InverseProperty(nameof(HotelStaffAssignment.Hotel))]
+    public virtual ICollection<HotelStaffAssignment> StaffAssignments { get; set; } = new List<HotelStaffAssignment>();
+
+    [InverseProperty(nameof(RoomType.Hotel))]
     public virtual ICollection<RoomType> RoomTypes { get; set; } = new List<RoomType>();
 
-    public virtual Ward Ward { get; set; } = null!;
+    [InverseProperty(nameof(HotelAmenity.Hotel))]
+    public virtual ICollection<HotelAmenity> HotelAmenities { get; set; } = new List<HotelAmenity>();
 }

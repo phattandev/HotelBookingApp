@@ -19,7 +19,7 @@ namespace HotelBookingApp.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetProvinceById(short id)
+        public async Task<IActionResult> GetProvinceById(Guid id)
         {
             return Ok(await _mediator.Send(new GetProvinceByIdQuery { Id = id }));
         }
@@ -31,14 +31,14 @@ namespace HotelBookingApp.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProvince(short id, UpdateProvinceCommand command)
+        public async Task<IActionResult> UpdateProvince(Guid id, UpdateProvinceCommand command)
         {
             if (id != command.Id) return BadRequest("ID in URL does not match ID in body.");
             return Ok(await _mediator.Send(command));
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProvince(short id)
+        public async Task<IActionResult> DeleteProvince(Guid id)
         {
             return Ok(await _mediator.Send(new DeleteProvinceCommand { Id = id }));
         }

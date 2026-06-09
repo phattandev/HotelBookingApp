@@ -25,7 +25,7 @@ namespace HotelBookingApp.Application.Features.Users.Queries
         {
             var user = await _context.Users.FindAsync(new object[] { request.Id }, cancellationToken);
             if (user == null) return new Response<UserDto>("Không tìm thấy người dùng với mã " + request.Id);
-            return new Response<UserDto>(_mapper.Map<UserDto>(user), "Lấy thành công thông tin người dùng " + user.Name);
+            return new Response<UserDto>(_mapper.Map<UserDto>(user), "Lấy thành công thông tin người dùng ");
         }
     }
 }

@@ -8,7 +8,7 @@ namespace HotelBookingApp.Application.DTOs.ProvinceDto
 {
     public class ProvinceDto
     {
-        public short Id { get; set; }
+        public Guid Id { get; set; }
         public string Code { get; set; } = null!;
         public string Name { get; set; } = null!;
         public string Slug { get; set; } = null!;

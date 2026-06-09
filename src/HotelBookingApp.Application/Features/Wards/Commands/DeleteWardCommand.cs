@@ -9,7 +9,7 @@ namespace HotelBookingApp.Application.Features.Wards.Commands
 {
     public class DeleteWardCommand : IRequest<Response<WardDto>>
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
     }
 
     public class DeleteWardCommandHandler : IRequestHandler<DeleteWardCommand, Response<WardDto>>

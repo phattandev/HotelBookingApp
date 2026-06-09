@@ -8,7 +8,7 @@ namespace HotelBookingApp.Application.Features.Provinces.Commands
 {
     public class DeleteProvinceCommand : IRequest<Response<ProvinceDto>>
     {
-        public short Id { get; set; }
+        public Guid Id { get; set; }
     }
 
     public class DeleteProvinceCommandHandler : IRequestHandler<DeleteProvinceCommand, Response<ProvinceDto>>

@@ -9,7 +9,7 @@ namespace HotelBookingApp.Application.Features.Wards.Queries
 {
     public class GetWardByIdQuery : IRequest<Response<WardDto>>
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
     }
 
     public class GetWardByIdQueryHandler : IRequestHandler<GetWardByIdQuery, Response<WardDto>>

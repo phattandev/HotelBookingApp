@@ -9,7 +9,7 @@ namespace HotelBookingApp.Application.Features.Wards.Commands
 {
     public class UpdateWardCommand : IRequest<Response<WardDto>>
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public short ProvinceId { get; set; }
         public string Code { get; set; } = null!;
         public string Name { get; set; } = null!;

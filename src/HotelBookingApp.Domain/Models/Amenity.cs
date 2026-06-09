@@ -1,23 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HotelBookingApp.Infrastructure;
 
-public partial class Amenity
+[Table("amenities")]
+public class Amenity
 {
-    public int Id { get; set; }
+    [Key]
+    [Column("id")]
+    public Guid Id { get; set; }
 
-    public short CategoryId { get; set; }
+    [Required]
+    [Column("category_id")]
+    public Guid CategoryId { get; set; }
 
+    [Required]
+    [MaxLength(100)]
+    [Column("name")]
     public string Name { get; set; } = null!;
 
-    public string? IconUrl { get; set; }
+    [Column("is_active")]
+    public bool? IsActive { get; set; } = true;
 
-    public bool? IsActive { get; set; }
-
+    [ForeignKey(nameof(CategoryId))]
     public virtual AmenityCategory Category { get; set; } = null!;
 
+    [InverseProperty(nameof(HotelAmenity.Amenity))]
     public virtual ICollection<HotelAmenity> HotelAmenities { get; set; } = new List<HotelAmenity>();
 
+    [InverseProperty(nameof(RoomTypeAmenity.Amenity))]
     public virtual ICollection<RoomTypeAmenity> RoomTypeAmenities { get; set; } = new List<RoomTypeAmenity>();
 }

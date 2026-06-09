@@ -1,21 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Xml.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.Infrastructure;
 
-public partial class Province
+[Table("provinces")]
+[Index(nameof(Code), IsUnique = true, Name = "idx_provinces_code")]
+public class Province
 {
-    public short Id { get; set; }
+    [Key]
+    [Column("id")]
+    public Guid Id { get; set; }
 
+    [Required]
+    [MaxLength(10)]
+    [Column("code")]
     public string Code { get; set; } = null!;
 
+    [Required]
+    [MaxLength(100)]
+    [Column("name")]
     public string Name { get; set; } = null!;
 
+    [Required]
+    [MaxLength(100)]
+    [Column("slug")]
     public string Slug { get; set; } = null!;
 
+    [Required]
+    [MaxLength(30)]
+    [Column("type")]
     public string Type { get; set; } = null!;
 
-    public bool? IsActive { get; set; }
+    [Column("is_active")]
+    public bool? IsActive { get; set; } = true;
 
+    [InverseProperty(nameof(Ward.Province))]
     public virtual ICollection<Ward> Wards { get; set; } = new List<Ward>();
 }

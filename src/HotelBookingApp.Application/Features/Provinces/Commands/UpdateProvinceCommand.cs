@@ -8,7 +8,7 @@ namespace HotelBookingApp.Application.Features.Provinces.Commands
 {
     public class UpdateProvinceCommand : IRequest<Response<ProvinceDto>>
     {
-        public short Id { get; set; }
+        public Guid Id { get; set; }
         public string Code { get; set; } = null!;
         public string Name { get; set; } = null!;
         public string Slug { get; set; } = null!;

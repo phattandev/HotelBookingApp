@@ -8,7 +8,7 @@ namespace HotelBookingApp.Application.Features.Provinces.Queries
 {
     public class GetProvinceByIdQuery : IRequest<Response<ProvinceDto>>
     {
-        public short Id { get; set; }
+        public Guid Id { get; set; }
     }
 
     public class GetProvinceByIdQueryHandler : IRequestHandler<GetProvinceByIdQuery, Response<ProvinceDto>>

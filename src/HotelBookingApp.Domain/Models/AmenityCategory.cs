@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HotelBookingApp.Infrastructure;
 
-public partial class AmenityCategory
+[Table("amenity_categories")]
+public class AmenityCategory
 {
-    public short Id { get; set; }
+    [Key]
+    [Column("id")]
+    public Guid Id { get; set; }
 
+    [Required]
+    [MaxLength(100)]
+    [Column("name")]
     public string Name { get; set; } = null!;
 
-    public string TargetType { get; set; } = null!;
-
-    public short? DisplayOrder { get; set; }
-
+    [InverseProperty(nameof(Amenity.Category))]
     public virtual ICollection<Amenity> Amenities { get; set; } = new List<Amenity>();
 }

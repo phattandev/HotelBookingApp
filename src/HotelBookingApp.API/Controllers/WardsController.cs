@@ -19,7 +19,7 @@ namespace HotelBookingApp.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetWardById(int id)
+        public async Task<IActionResult> GetWardById(Guid id)
         {
             return Ok(await _mediator.Send(new GetWardByIdQuery { Id = id }));
         }
@@ -31,14 +31,14 @@ namespace HotelBookingApp.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateWard(int id, UpdateWardCommand command)
+        public async Task<IActionResult> UpdateWard(Guid id, UpdateWardCommand command)
         {
             if (id != command.Id) return BadRequest("ID mismatches.");
             return Ok(await _mediator.Send(command));
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteWard(int id)
+        public async Task<IActionResult> DeleteWard(Guid id)
         {
             return Ok(await _mediator.Send(new DeleteWardCommand { Id = id }));
         }
