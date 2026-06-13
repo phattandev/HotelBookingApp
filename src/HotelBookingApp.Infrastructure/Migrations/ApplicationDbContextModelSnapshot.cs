@@ -205,6 +205,12 @@ namespace HotelBookingApp.Infrastructure.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<string>("TaxCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tax_code");
+
                     b.Property<Guid>("WardId")
                         .HasColumnType("uuid")
                         .HasColumnName("ward_id");

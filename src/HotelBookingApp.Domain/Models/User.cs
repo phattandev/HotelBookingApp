@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Reflection;
-using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
-using HotelBookingApp.Domain.Models;
 
-namespace HotelBookingApp.Infrastructure;
+namespace HotelBookingApp.Domain.Models;
 
 [Table("users")]
 [Index(nameof(Email), IsUnique = true, Name = "idx_users_email")]

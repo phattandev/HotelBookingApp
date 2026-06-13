@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using HotelBookingApp.Domain.Models;
 
-namespace HotelBookingApp.Infrastructure;
+namespace HotelBookingApp.Domain.Models;
 
 [Table("hotels")]
 public class Hotel
@@ -28,13 +28,18 @@ public class Hotel
     public string AddressLine { get; set; } = null!;
 
     [Required]
+    [MaxLength(50)]
+    [Column("tax_code")]
+    public string TaxCode { get; set; } = null!;
+
+    [Required]
     [Column("ward_id")]
     public Guid WardId { get; set; }
 
     [Required]
     [MaxLength(20)]
     [Column("approval_status")]
-    public string ApprovalStatus { get; set; } = "Pending";
+    public HotelApprovalStatus ApprovalStatus { get; set; } = HotelApprovalStatus.Pending;
 
     [Column("is_active")]
     public bool IsActive { get; set; } = false;

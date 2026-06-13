@@ -1,5 +1,4 @@
-﻿using System.Security.Claims;
-using HotelBookingApp.Infrastructure;
+﻿using HotelBookingApp.Domain.Models;
 
 namespace HotelBookingApp.Application.Common.Interfaces
 {

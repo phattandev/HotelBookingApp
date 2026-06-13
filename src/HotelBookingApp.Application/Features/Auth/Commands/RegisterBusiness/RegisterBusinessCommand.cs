@@ -4,7 +4,6 @@ using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.AuthDto;
 using HotelBookingApp.Application.Wrapper;
 using HotelBookingApp.Domain.Models;
-using HotelBookingApp.Infrastructure;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 

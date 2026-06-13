@@ -3,7 +3,7 @@ using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.AuthDto;
 using HotelBookingApp.Application.Wrapper;
-using HotelBookingApp.Infrastructure;
+using HotelBookingApp.Domain.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 

@@ -4,6 +4,7 @@ using HotelBookingApp.Application.Common.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using HotelBookingApp.Domain.Models;
 using System.Text;
 
 namespace HotelBookingApp.Infrastructure.Services
@@ -20,7 +21,7 @@ namespace HotelBookingApp.Infrastructure.Services
         public string GenerateAccessToken(User user)
         {
             IConfigurationSection? jwtSettings = _configuration.GetSection("JwtSettings");
-            string? secretKey = jwtSettings["SecretKey"] ?? "sGraw5@|K1aQFW+?fo.T*/fBI)4Jy8P60:wdRtncyO@KFme/2J&toDLz!U#/x$4kb6hIkq16Boo.wx(elXB>EySOik!^Vz%!%!L2URXr&8Ksmj*oWt&7As(b:jut9+|VUBM9OcJtfco[1Hzq;TsBY+kasYrzvu?Tm4FUcLvm9$EWW#A:Iv3fD{CE$f>uI4WKlA7zDrJJehF.f[|4CbA%k#e^v5A.[$J]vyo[wu%C=p1G[Q#%G{rrxJxCaD?c5}o}slmG1L1>&)xaRgGHUzU-)t,JtLzx?eMo=eqptS&{@OkQ=Z)PSorxKzaP=@I:w<0=U*d3lC+)plY,;$<pss)uvE1>jb8m?!$czGc]52sC,C{tmmRgd@)bQqybG&%GY).[e}8kGWk5-@86GA[WOy|7KmA}%Udbcv.X5)_3.-7xiq6,{=,4WVCrc#-:[8:/2&)Y;inTJDuqjgy@UNRN5/1zh;rA{$JGVPvOG7E<{nb*Gl%w,2K)ws7;Rp00:lNd-xC[";
+            string? secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("Jwt Secret is missing");
 
             SymmetricSecurityKey? securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             SigningCredentials? credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha512);

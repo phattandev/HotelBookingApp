@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace HotelBookingApp.Infrastructure;
+namespace HotelBookingApp.Domain.Models;
 
 [Table("room_type_amenities")]
 [PrimaryKey(nameof(RoomTypeId), nameof(AmenityId))] // Khai báo Khóa phức hợp (EF Core 7+)

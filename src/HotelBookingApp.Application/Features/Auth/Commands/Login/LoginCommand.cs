@@ -3,7 +3,7 @@ using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.AuthDto;
 using HotelBookingApp.Application.Wrapper;
-using HotelBookingApp.Infrastructure;
+using HotelBookingApp.Domain.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,26 +30,42 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.Login
 
         public async Task<Response<AuthResponseDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
+            // 1. So sánh không phân biệt hoa thường (Fix lỗi Case-Sensitive của PostgreSQL)
             User? user = await _context.Users.
                 Include(u => u.Role).
-                FirstOrDefaultAsync(u => u.Username == request.UsernameOrEmail || u.Email == request.UsernameOrEmail, cancellationToken);
+                FirstOrDefaultAsync(u =>
+                    u.Username.ToLower() == request.UsernameOrEmail.ToLower() ||
+                    u.Email.ToLower() == request.UsernameOrEmail.ToLower(),
+                cancellationToken);
+            
+            
 
+            // 2. Kiểm tra sai thông tin đăng nhập
             if (user == null || !_passwordHasher.VerifyPasswordEnhanced(request.Password, user.PasswordHash))
             {
                 throw new ApiException("Tài khoản hoặc mật khẩu không chính xác.");
             }
 
+            if (!user.IsActive)
+            {
+                throw new ApiException("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ với Chủ doanh nghiệp hoặc Quản trị viên.");
+            }
+
+            // 4. Sinh Token
             string? accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
             string? refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
 
             user.RefreshToken = refreshToken;
+
+            // 5. Fix lỗi DateTime cho PostgreSQL (Chỉ dùng UtcNow, không dùng SpecifyKind)
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
             await _context.SaveChangesAsync(cancellationToken);
 
             AuthResponseDto? responseData = new AuthResponseDto
             {
                 UserId = user.Id.ToString(),
-                FullName = user.Username,
+                FullName = user.FullName ?? user.Username, // Ưu tiên trả về FullName hiển thị cho đẹp
                 Email = user.Email,
                 AccessToken = accessToken,
                 RefreshToken = refreshToken

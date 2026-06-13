@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace HotelBookingApp.Application.DTOs.WardDto
+﻿namespace HotelBookingApp.Application.DTOs.WardDto
 {
     public class WardDto
     {
         public Guid Id { get; set; }
-        public short ProvinceId { get; set; }
+        public Guid ProvinceId { get; set; }
         public string ProvinceName { get; set; } = null!; // Hiển thị tên Tỉnh/Thành
         public string Code { get; set; } = null!;
         public string Name { get; set; } = null!;

@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Xml.Linq;
 using Microsoft.EntityFrameworkCore;
 
-namespace HotelBookingApp.Infrastructure;
+namespace HotelBookingApp.Domain.Models;
 
 [Table("provinces")]
 [Index(nameof(Code), IsUnique = true, Name = "idx_provinces_code")]

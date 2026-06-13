@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using HotelBookingApp.Infrastructure;
+using HotelBookingApp.Domain.Models;
 
 namespace HotelBookingApp.Domain.Models
 {

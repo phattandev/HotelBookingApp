@@ -2,7 +2,7 @@
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.ProvinceDto;
 using HotelBookingApp.Application.Wrapper;
-using HotelBookingApp.Infrastructure;
+using HotelBookingApp.Domain.Models;
 using MediatR;
 
 namespace HotelBookingApp.Application.Features.Provinces.Commands

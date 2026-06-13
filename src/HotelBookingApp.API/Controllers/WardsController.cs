@@ -13,9 +13,9 @@ namespace HotelBookingApp.API.Controllers
         public WardsController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet]
-        public async Task<IActionResult> GetAllWards()
+        public async Task<IActionResult> GetAllWards([FromQuery] GetWardsQuery query)
         {
-            return Ok(await _mediator.Send(new GetWardsQuery()));
+            return Ok(await _mediator.Send(query));
         }
 
         [HttpGet("{id}")]

@@ -1,6 +1,5 @@
 ﻿using System;
 using HotelBookingApp.Domain.Models;
-using HotelBookingApp.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.Application.Common.Interfaces

@@ -7,7 +7,7 @@ using AutoMapper;
 using HotelBookingApp.Application.DTOs.ProvinceDto;
 using HotelBookingApp.Application.DTOs.UserDto;
 using HotelBookingApp.Application.DTOs.WardDto;
-using HotelBookingApp.Infrastructure;
+using HotelBookingApp.Domain.Models;
 
 namespace HotelBookingApp.Application.Mapping
 {
@@ -22,8 +22,10 @@ namespace HotelBookingApp.Application.Mapping
             CreateMap<Features.Provinces.Commands.CreateProvinceCommand, Province>();
             CreateMap<Features.Provinces.Commands.UpdateProvinceCommand, Province>();
 
+            // Sửa đoạn code cũ thành đoạn mã an toàn này:
             CreateMap<Ward, WardDto>()
-                .ForMember(dest => dest.ProvinceName, opt => opt.MapFrom(src => src.Province.Name));
+                .ForMember(dest => dest.ProvinceName, opt => opt.MapFrom(src =>
+                    src.Province != null ? src.Province.Name : string.Empty));
             CreateMap<Features.Wards.Commands.CreateWardCommand, Ward>();
             CreateMap<Features.Wards.Commands.UpdateWardCommand, Ward>();
 

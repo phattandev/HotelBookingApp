@@ -1,8 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Domain.Models;
-using HotelBookingApp.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.Infrastructure.Persistence;
@@ -57,5 +56,10 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
             .WithMany(p => p.Hotels)
             .HasForeignKey(d => d.WardId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Lưu enum HotelApprovalStatus thành string trong DB (tương thích dữ liệu cũ)
+        modelBuilder.Entity<Hotel>()
+            .Property(h => h.ApprovalStatus)
+            .HasConversion<string>();
     }
 }

@@ -1,46 +1,31 @@
 ﻿using HotelBookingApp.Application.Features.Provinces.Commands;
 using HotelBookingApp.Application.Features.Provinces.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelBookingApp.API.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class ProvincesController : ControllerBase
     {
         private readonly IMediator _mediator;
         public ProvincesController(IMediator mediator) => _mediator = mediator;
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllProvinces()
-        {
-            return Ok(await _mediator.Send(new GetProvincesQuery()));
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetProvinceById(Guid id)
-        {
-            return Ok(await _mediator.Send(new GetProvinceByIdQuery { Id = id }));
-        }
+        [HttpGet] // Mọi người đều có thể xem danh sách tỉnh thành để chọn
+        public async Task<IActionResult> GetAll() => Ok(await _mediator.Send(new GetProvincesQuery()));
 
         [HttpPost]
-        public async Task<IActionResult> CreateProvince(CreateProvinceCommand command)
-        {
-            return Ok(await _mediator.Send(command));
-        }
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> Create([FromBody] CreateProvinceCommand command) => Ok(await _mediator.Send(command));
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProvince(Guid id, UpdateProvinceCommand command)
-        {
-            if (id != command.Id) return BadRequest("ID in URL does not match ID in body.");
-            return Ok(await _mediator.Send(command));
-        }
+        [HttpPut]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> Update([FromBody] UpdateProvinceCommand command) => Ok(await _mediator.Send(command));
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProvince(Guid id)
-        {
-            return Ok(await _mediator.Send(new DeleteProvinceCommand { Id = id }));
-        }
+        //[HttpDelete("{id}")]
+        //[Authorize(Roles = "admin")]
+        //public async Task<IActionResult> Delete(Guid id) => Ok(await _mediator.Send(new DeleteProvinceCommand(id)));
     }
 }

@@ -2,7 +2,7 @@
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.WardDto;
 using HotelBookingApp.Application.Wrapper;
-using HotelBookingApp.Infrastructure;
+using HotelBookingApp.Domain.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +10,7 @@ namespace HotelBookingApp.Application.Features.Wards.Commands
 {
     public class CreateWardCommand : IRequest<Response<WardDto>>
     {
-        public short ProvinceId { get; set; }
+        public Guid ProvinceId { get; set; }
         public string Code { get; set; } = null!;
         public string Name { get; set; } = null!;
         public string Slug { get; set; } = null!;
