@@ -1,4 +1,4 @@
-﻿namespace HotelBookingApp.Application.DTOs.HotelDto
+namespace HotelBookingApp.Application.DTOs.HotelDto
 {
     public class HotelDto
     {
@@ -8,5 +8,11 @@
         public string TaxCode { get; set; } = null!;
         public string ApprovalStatus { get; set; } = null!;
         public bool IsActive { get; set; }
+        
+        // --- Added for Admin Approval View ---
+        public string? BusinessName { get; set; }
+        public string? BusinessTaxCode { get; set; }
+        public string? BusinessAddress { get; set; }
+        public string? RepresentativeName { get; set; }
     }
 }

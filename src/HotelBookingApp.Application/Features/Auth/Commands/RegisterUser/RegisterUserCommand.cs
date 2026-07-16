@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.AuthDto;
@@ -86,7 +86,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterUser
         {
             RuleFor(p => p.Email)
                 .NotEmpty().WithMessage("Email không được để trống.")
-                .EmailAddress().WithMessage("Định dạng Email không hợp lệ.");
+                .Matches(@"^[^@\s]+@[^@\s]+\.[^@\s]+$").WithMessage("Email không hợp lệ (phải có @ và tên miền hợp lệ).");
 
             RuleFor(p => p.Password)
                 .NotEmpty().WithMessage("Mật khẩu không được để trống.")

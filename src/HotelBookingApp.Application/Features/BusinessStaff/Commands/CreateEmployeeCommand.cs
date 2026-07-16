@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FluentValidation;
 using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.Wrapper;
@@ -14,12 +15,11 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
 {
     public class CreateEmployeeCommand : IRequest<Response<string>>
     {
-        public Guid PartnerId { get; set; } // Sẽ được gán từ Controller qua Token
+        public Guid PartnerId { get; set; } // Gán từ Controller qua JWT Token
         public string Email { get; set; } = null!;
         public string FullName { get; set; } = null!;
         public string Phone { get; set; } = null!;
         public string Password { get; set; } = null!;
-        public string RoleName { get; set; } = null!; // "manager" hoặc "employee"
     }
 
     public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, Response<string>>
@@ -41,8 +41,9 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
             var business = await _context.Businesses.FirstOrDefaultAsync(b => b.OwnerId == request.PartnerId, cancellationToken);
             if (business == null) throw new ApiException("Hồ sơ doanh nghiệp không tồn tại.");
 
-            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == request.RoleName.ToLower(), cancellationToken);
-            if (role == null) throw new ApiException("Quyền hạn không hợp lệ.");
+            // Luôn gán role "staff" cho nhân viên mới — Partner sẽ phân công sau
+            var staffRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name.ToLower() == "staff", cancellationToken);
+            if (staffRole == null) throw new ApiException("Role 'staff' chưa được cấu hình. Vui lòng liên hệ Admin.");
 
             var user = new User
             {
@@ -51,18 +52,46 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
                 Email = request.Email,
                 FullName = request.FullName,
                 Phone = request.Phone,
-                PasswordHash = _passwordHasher.HashPasswordEnhanced(request.Password), // Dùng chung hàm Hash để đăng nhập được
-                RoleId = role.Id,
-                BusinessId = business.Id, // Liên kết nhân viên vào đúng doanh nghiệp
+                PasswordHash = _passwordHasher.HashPasswordEnhanced(request.Password),
+                RoleId = staffRole.Id,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
             _context.Users.Add(user);
+
+            var businessStaff = new Domain.Models.BusinessStaff
+            {
+                Id = Guid.NewGuid(),
+                BusinessId = business.Id,
+                UserId = user.Id,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.BusinessStaff.Add(businessStaff);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<string>($"Đã thêm tài khoản {request.RoleName} thành công.");
+            return new Response<string>($"Đã thêm nhân viên '{request.FullName}' thành công. Vui lòng phân công tại mục Phân Công.");
+        }
+    }
+
+    public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCommand>
+    {
+        public CreateEmployeeCommandValidator()
+        {
+            RuleFor(x => x.FullName).NotEmpty().WithMessage("Họ tên không được để trống.")
+                .MaximumLength(100).WithMessage("Họ tên tối đa 100 ký tự.");
+
+            RuleFor(x => x.Email).NotEmpty().WithMessage("Email không được để trống.")
+                .EmailAddress().WithMessage("Email không đúng định dạng.");
+
+            RuleFor(x => x.Phone).NotEmpty().WithMessage("Số điện thoại không được để trống.")
+                .MaximumLength(15).WithMessage("Số điện thoại tối đa 15 ký tự.");
+
+            RuleFor(x => x.Password).NotEmpty().WithMessage("Mật khẩu không được để trống.")
+                .MinimumLength(6).WithMessage("Mật khẩu phải có ít nhất 6 ký tự.");
         }
     }
 }

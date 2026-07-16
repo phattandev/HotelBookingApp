@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.WardDto;
 using HotelBookingApp.Application.Wrapper;
@@ -33,8 +33,7 @@ namespace HotelBookingApp.Application.Features.Wards.Commands
             var ward = await _context.Wards.Include(w => w.Province).FirstOrDefaultAsync(w => w.Id == request.Id, cancellationToken);
             if (ward == null) return new Response<WardDto>("Không tìm thấy phường/xã với mã " + request.Id);
 
-            var dto = _mapper.Map<WardDto>(ward);
-            //_mapper.Map(request, ward);
+            _mapper.Map(request, ward);
             await _context.SaveChangesAsync(cancellationToken);
 
             return new Response<WardDto>(_mapper.Map<WardDto>(ward), "Cập nhật phường/xã thành công");

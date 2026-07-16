@@ -1,16 +1,12 @@
 using System.Security.Claims;
 using System.Text;
+using Hangfire;
+using Hangfire.PostgreSql;
 using HotelBookingApp.Application;
 using HotelBookingApp.Application.Middlewares;
-
 using HotelBookingApp.Infrastructure;
+using HotelBookingApp.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -79,9 +75,27 @@ namespace HotelBookingApp.API
 
                     RoleClaimType = ClaimTypes.Role
                 };
-
             });
 
+            // Hangfire: Background Job Processing
+            var connectionString = Configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("DefaultConnection chưa được cấu hình.");
+
+            services.AddHangfire(config => config
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(connectionString)));
+
+            services.AddHangfireServer(opts =>
+            {
+                opts.WorkerCount = 2;       // Số worker (2 là đủ cho dự án)
+                opts.Queues = new[] { "default" };
+            });
+
+            // Đăng ký Job class vào DI
+            services.AddScoped<BookingCompletionJob>();
+            services.AddScoped<BookingDepositJob>();
 
         }
 
@@ -107,9 +121,35 @@ namespace HotelBookingApp.API
 
             app.UseAuthorization();
 
+            // Hangfire Dashboard — chỉ admin được xem (production nên thêm Authorization filter)
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                // TODO: Thêm DashboardAuthorizationFilter cho production
+                Authorization = Array.Empty<Hangfire.Dashboard.IDashboardAuthorizationFilter>()
+            });
+
+            // Recurring Job: tự động hoàn thành booking sau 12:00 trưa giờ VN (chạy mỗi giờ)
+            RecurringJob.AddOrUpdate<BookingCompletionJob>(
+                "auto-complete-bookings",
+                job => job.ExecuteAsync(),
+                "0 * * * *");    // Cron: Mỗi giờ
+
+            // Recurring Job: tự động hủy đơn quá 12h chưa cọc (chạy mỗi 30 phút)
+            RecurringJob.AddOrUpdate<BookingDepositJob>(
+                "auto-cancel-unpaid-bookings",
+                job => job.AutoCancelUnpaidBookingsAsync(),
+                "*/30 * * * *");  // Cron: mỗi 30 phút
+
+            // Recurring Job: nhắc nhở khách chưa cọc (chạy mỗi 60 phút)
+            RecurringJob.AddOrUpdate<BookingDepositJob>(
+                "send-deposit-reminders",
+                job => job.SendDepositReminderEmailsAsync(),
+                "0 * * * *");     // Cron: đầu mỗi giờ
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHangfireDashboard();
             });
         }
     }

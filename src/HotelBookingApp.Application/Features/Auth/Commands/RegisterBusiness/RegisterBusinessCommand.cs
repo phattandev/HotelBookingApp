@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.AuthDto;
@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
 {
-    public class RegisterBusinessCommand : IRequest<Response<AuthResponseDto>>
+    public class RegisterBusinessCommand : IRequest<Response<string>>
     {
         // Nhóm thông tin doanh nghiệp
         public string BusinessName { get; set; } = null!;
@@ -27,20 +27,18 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
         public string ConfirmPassword { get; set; } = null!;
     }
 
-    public class RegisterBusinessCommandHandler : IRequestHandler<RegisterBusinessCommand, Response<AuthResponseDto>>
+    public class RegisterBusinessCommandHandler : IRequestHandler<RegisterBusinessCommand, Response<string>>
     {
         private readonly IApplicationDbContext _context;
         private readonly IPasswordHasher _passwordHasher;
-        private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
-        public RegisterBusinessCommandHandler(IApplicationDbContext context, IPasswordHasher passwordHasher, IJwtTokenGenerator jwtTokenGenerator)
+        public RegisterBusinessCommandHandler(IApplicationDbContext context, IPasswordHasher passwordHasher)
         {
             _context = context;
             _passwordHasher = passwordHasher;
-            _jwtTokenGenerator = jwtTokenGenerator;
         }
 
-        public async Task<Response<AuthResponseDto>> Handle(RegisterBusinessCommand request, CancellationToken cancellationToken)
+        public async Task<Response<string>> Handle(RegisterBusinessCommand request, CancellationToken cancellationToken)
         {
             // 1. Kiểm tra Email tồn tại
             var emailExists = await _context.Users.AnyAsync(u => u.Email == request.RepresentativeEmail, cancellationToken);
@@ -79,31 +77,15 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
                 BusinessAddress = request.BusinessAddress,
                 RepresentativeName = request.RepresentativeName,
                 Position = request.Position,
-                VerificationStatus = "Pending" // Chờ Admin duyệt nếu cần
+                VerificationStatus = BusinessVerificationStatus.Pending // Chờ Admin duyệt nếu cần
             };
 
-            // 5. Sinh Token
-            string accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
-            string refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
-
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-
-            // 6. Lưu vào DB (EF Core sẽ tự động bọc trong Transaction)
+            // 5. Lưu vào DB (EF Core sẽ tự động bọc trong Transaction)
             _context.Users.Add(user);
             _context.Businesses.Add(business);
             await _context.SaveChangesAsync(cancellationToken);
 
-            var responseData = new AuthResponseDto
-            {
-                UserId = user.Id.ToString(),
-                FullName = user.FullName, // Trả về FullName hợp lý hơn Username
-                Email = user.Email,
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
-            };
-
-            return new Response<AuthResponseDto>(responseData, "Yêu cầu đăng ký tài khoản doanh nghiệp đối tác đã được gửi lên hệ thống.");
+            return new Response<string>("Đăng ký doanh nghiệp thành công! Vui lòng chờ Admin phê duyệt trước khi đăng nhập.");
         }
     }
 
@@ -124,7 +106,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
 
             RuleFor(p => p.RepresentativeEmail)
                 .NotEmpty().WithMessage("Email làm việc bắt buộc nhập.")
-                .EmailAddress().WithMessage("Định dạng thư điện tử email làm việc không đúng.");
+                .Matches(@"^[^@\s]+@[^@\s]+\.[^@\s]+$").WithMessage("Email không hợp lệ (phải có @ và tên miền hợp lệ).");
 
             RuleFor(p => p.Password)
                 .NotEmpty().WithMessage("Mật khẩu tài khoản không được để trống.")

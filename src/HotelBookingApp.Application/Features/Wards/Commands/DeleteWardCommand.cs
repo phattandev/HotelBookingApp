@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.WardDto;
 using HotelBookingApp.Application.Wrapper;
@@ -28,10 +28,11 @@ namespace HotelBookingApp.Application.Features.Wards.Commands
             if (ward == null) return new Response<WardDto>("Không tìm thấy phường/xã với mã " + request.Id);
 
             var dto = _mapper.Map<WardDto>(ward);
-            _context.Wards.Remove(ward);
+            ward.IsActive = !(ward.IsActive ?? true);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<WardDto>(dto, "Xoá thành công phường/xã:" + dto.Name);
+            string status = ward.IsActive == true ? "Hiện" : "Ẩn";
+            return new Response<WardDto>(dto, $"{status} thành công phường/xã: {dto.Name}");
         }
     }
 }

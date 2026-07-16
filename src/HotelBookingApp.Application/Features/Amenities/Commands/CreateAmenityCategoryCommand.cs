@@ -1,4 +1,4 @@
-﻿using HotelBookingApp.Application.Common.Exceptions;
+using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.AmenityDto;
 using HotelBookingApp.Application.Wrapper;
@@ -11,6 +11,7 @@ namespace HotelBookingApp.Application.Features.Amenities.Commands
     public class CreateAmenityCategoryCommand : IRequest<Response<AmenityCategoryDto>>
     {
         public string Name { get; set; } = null!;
+        public string ApplicableTo { get; set; } = "both";
     }
 
     public class CreateAmenityCategoryCommandHandler
@@ -27,12 +28,17 @@ namespace HotelBookingApp.Application.Features.Amenities.Commands
             if (duplicate)
                 throw new ApiException($"Danh mục '{request.Name}' đã tồn tại!");
 
-            var category = new AmenityCategory { Id = Guid.NewGuid(), Name = request.Name.Trim() };
+            var category = new AmenityCategory 
+            { 
+                Id = Guid.NewGuid(), 
+                Name = request.Name.Trim(),
+                ApplicableTo = request.ApplicableTo.ToLower()
+            };
             _context.AmenityCategories.Add(category);
             await _context.SaveChangesAsync(cancellationToken);
 
             return new Response<AmenityCategoryDto>(
-                new AmenityCategoryDto { Id = category.Id, Name = category.Name },
+                new AmenityCategoryDto { Id = category.Id, Name = category.Name, ApplicableTo = category.ApplicableTo },
                 $"Đã tạo danh mục '{category.Name}'!");
         }
     }

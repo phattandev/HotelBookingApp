@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.ProvinceDto;
 using HotelBookingApp.Application.Wrapper;
@@ -27,10 +27,11 @@ namespace HotelBookingApp.Application.Features.Provinces.Commands
             if (province == null) return new Response<ProvinceDto>("Không tìm thấy tỉnh/thành phố với mã" + request.Id);
 
             var dto = _mapper.Map<ProvinceDto>(province);
-            _context.Provinces.Remove(province);
+            province.IsActive = !(province.IsActive ?? true);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<ProvinceDto>(dto, "Xoá thành công tỉnh/thành phố: " + dto.Name);
+            string status = province.IsActive == true ? "Hiện" : "Ẩn";
+            return new Response<ProvinceDto>(dto, $"{status} thành công tỉnh/thành phố: {dto.Name}");
         }
     }
 }

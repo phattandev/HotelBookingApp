@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -48,4 +48,7 @@ public class RoomType
 
     [InverseProperty(nameof(RoomTypeAmenity.RoomType))]
     public virtual ICollection<RoomTypeAmenity> RoomTypeAmenities { get; set; } = new List<RoomTypeAmenity>();
+
+    [InverseProperty(nameof(RoomTypeImage.RoomType))]
+    public virtual ICollection<RoomTypeImage> Images { get; set; } = new List<RoomTypeImage>();
 }

@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-
-namespace HotelBookingApp.API
+﻿namespace HotelBookingApp.API
 {
     public class Program
     {

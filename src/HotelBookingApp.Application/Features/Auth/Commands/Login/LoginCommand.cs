@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.AuthDto;
@@ -49,6 +49,30 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.Login
             if (!user.IsActive)
             {
                 throw new ApiException("Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ với Chủ doanh nghiệp hoặc Quản trị viên.");
+            }
+
+            // 3. Kiểm tra Doanh nghiệp đối với role Partner
+            if (user.Role != null && user.Role.Name.ToLower() == "partner")
+            {
+                var business = await _context.Businesses.FirstOrDefaultAsync(b => b.OwnerId == user.Id, cancellationToken);
+
+                // Nếu tài khoản partner mà không có hồ sơ DN → bất thường, không cho đăng nhập
+                if (business == null)
+                {
+                    throw new ApiException("Tài khoản doanh nghiệp của bạn chưa có hồ sơ hợp lệ. Vui lòng liên hệ Admin.");
+                }
+
+                if (business.VerificationStatus == BusinessVerificationStatus.Pending)
+                {
+                    throw new ApiException("Tài khoản doanh nghiệp của bạn đang chờ Admin phê duyệt. Vui lòng quay lại sau.");
+                }
+                else if (business.VerificationStatus == BusinessVerificationStatus.Rejected)
+                {
+                    var reason = string.IsNullOrWhiteSpace(business.RejectionReason)
+                        ? "Không có lý do cụ thể."
+                        : business.RejectionReason;
+                    throw new ApiException($"Hồ sơ doanh nghiệp của bạn đã bị từ chối phê duyệt. Lý do: {reason}");
+                }
             }
 
             // 4. Sinh Token

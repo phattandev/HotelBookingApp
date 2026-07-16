@@ -1,11 +1,10 @@
-﻿using HotelBookingApp.Application.DTOs.AuthDto;
+using HotelBookingApp.Application.DTOs.AuthDto;
 using HotelBookingApp.Application.Features.Auth.Commands.Login;
 using HotelBookingApp.Application.Features.Auth.Commands.RefreshToken;
 using HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness;
 using HotelBookingApp.Application.Features.Auth.Commands.RegisterUser;
 using HotelBookingApp.Application.Wrapper;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelBookingApp.API.Controllers
@@ -45,7 +44,7 @@ namespace HotelBookingApp.API.Controllers
         [HttpPost("register/business")]
         public async Task<IActionResult> RegisterBusiness([FromBody] RegisterBusinessCommand command)
         {
-            Response<AuthResponseDto> response = await _mediator.Send(command);
+            Response<string> response = await _mediator.Send(command);
             return Ok(response);
         }
     }

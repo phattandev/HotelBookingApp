@@ -41,8 +41,24 @@ public class Hotel
     [Column("approval_status")]
     public HotelApprovalStatus ApprovalStatus { get; set; } = HotelApprovalStatus.Pending;
 
+    /// <summary>Lý do Admin từ chối duyệt khách sạn (nếu có).</summary>
+    [Column("rejection_reason", TypeName = "text")]
+    public string? RejectionReason { get; set; }
+
     [Column("is_active")]
     public bool IsActive { get; set; } = false;
+
+    [Column("description", TypeName = "text")]
+    public string? Description { get; set; }
+
+    [Column("star_rating")]
+    public int? StarRating { get; set; } // 1-5, nullable
+
+    [Column("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column("updated_at")]
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // --- Navigation Properties ---
     [ForeignKey(nameof(BusinessId))]
@@ -59,4 +75,16 @@ public class Hotel
 
     [InverseProperty(nameof(HotelAmenity.Hotel))]
     public virtual ICollection<HotelAmenity> HotelAmenities { get; set; } = new List<HotelAmenity>();
+
+    [InverseProperty(nameof(HotelImage.Hotel))]
+    public virtual ICollection<HotelImage> Images { get; set; } = new List<HotelImage>();
+
+    [InverseProperty(nameof(HotelCancellationPolicy.Hotel))]
+    public virtual HotelCancellationPolicy? CancellationPolicy { get; set; }
+
+    [InverseProperty(nameof(HotelDepositPolicy.Hotel))]
+    public virtual HotelDepositPolicy? DepositPolicy { get; set; }
+
+    [InverseProperty(nameof(Booking.Hotel))]
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }

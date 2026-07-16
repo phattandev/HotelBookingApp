@@ -3,7 +3,6 @@ using HotelBookingApp.Application.Features.BusinessStaff.Commands;
 using HotelBookingApp.Application.Features.BusinessStaff.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HotelBookingApp.API.Controllers

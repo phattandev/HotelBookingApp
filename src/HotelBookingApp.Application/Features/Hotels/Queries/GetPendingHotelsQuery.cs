@@ -19,6 +19,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
             var hotels = await _context.Hotels
                 .Where(h => h.ApprovalStatus == HotelApprovalStatus.Pending)
                 .OrderBy(h => h.Name) // Bỏ CreatedAt
+                .Include(h => h.Business)
                 .Select(h => new HotelDto
                 {
                     Id = h.Id,
@@ -26,7 +27,11 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
                     AddressLine = h.AddressLine,
                     TaxCode = h.TaxCode,
                     ApprovalStatus = h.ApprovalStatus.ToString(),
-                    IsActive = h.IsActive
+                    IsActive = h.IsActive,
+                    BusinessName = h.Business.BusinessName,
+                    BusinessTaxCode = h.Business.TaxCode,
+                    BusinessAddress = h.Business.BusinessAddress,
+                    RepresentativeName = h.Business.RepresentativeName
                 })
                 .ToListAsync(cancellationToken);
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -46,16 +46,25 @@ namespace HotelBookingApp.Domain.Models
         public string Position { get; set; } = null!;
 
         [Required]
-        [MaxLength(20)]
         [Column("verification_status")]
-        public string VerificationStatus { get; set; } = "Pending";
+        public BusinessVerificationStatus VerificationStatus { get; set; } = BusinessVerificationStatus.Pending;
+
+        /// <summary>Lý do Admin từ chối hồ sơ doanh nghiệp (nếu có).</summary>
+        [Column("rejection_reason", TypeName = "text")]
+        public string? RejectionReason { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("updated_at")]
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         // --- Navigation Properties ---
         [ForeignKey(nameof(OwnerId))]
         public virtual User Owner { get; set; } = null!;
 
-        [InverseProperty(nameof(User.Business))]
-        public virtual ICollection<User> Employees { get; set; } = new List<User>();
+        [InverseProperty(nameof(BusinessStaff.Business))]
+        public virtual ICollection<BusinessStaff> Staff { get; set; } = new List<BusinessStaff>();
 
         [InverseProperty(nameof(Hotel.Business))]
         public virtual ICollection<Hotel> Hotels { get; set; } = new List<Hotel>();

@@ -1,4 +1,4 @@
-﻿using HotelBookingApp.Application.Common.Exceptions;
+using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.BusinessDto;
 using HotelBookingApp.Application.Wrapper;
@@ -23,19 +23,35 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Queries
             var business = await _context.Businesses.FirstOrDefaultAsync(b => b.OwnerId == request.PartnerId, cancellationToken);
             if (business == null) throw new ApiException("Bạn chưa sở hữu hồ sơ doanh nghiệp nào.");
 
-            var employees = await _context.Users
-                .Include(u => u.Role)
-                .Where(u => u.BusinessId == business.Id)
-                .OrderByDescending(u => u.CreatedAt)
-                .Select(u => new EmployeeDto
+            // LEFT JOIN với HotelStaffAssignment để lấy thông tin phân công hiện tại (IsActive = true)
+            var employees = await _context.BusinessStaff
+                .Include(bs => bs.User)
+                .ThenInclude(u => u.Role)
+                .Where(bs => bs.BusinessId == business.Id)
+                .OrderByDescending(bs => bs.CreatedAt)
+                .Select(bs => new EmployeeDto
                 {
-                    Id = u.Id,
-                    Email = u.Email,
-                    FullName = u.FullName,
-                    Phone = u.Phone,
-                    Role = u.Role.Name,
-                    IsActive = u.IsActive,
-                    CreatedAt = u.CreatedAt
+                    Id = bs.User.Id,
+                    Email = bs.User.Email,
+                    Username = bs.User.Username,
+                    FullName = bs.User.FullName,
+                    Phone = bs.User.Phone,
+                    Role = bs.User.Role.Name,
+                    IsActive = bs.User.IsActive,
+                    CreatedAt = bs.User.CreatedAt,
+                    // Lấy phân công đang active (nếu có)
+                    AssignedHotelId = bs.User.StaffAssignments
+                        .Where(a => a.IsActive)
+                        .Select(a => (Guid?)a.HotelId)
+                        .FirstOrDefault(),
+                    AssignedHotelName = bs.User.StaffAssignments
+                        .Where(a => a.IsActive)
+                        .Select(a => a.Hotel.Name)
+                        .FirstOrDefault(),
+                    RoleInHotel = bs.User.StaffAssignments
+                        .Where(a => a.IsActive)
+                        .Select(a => a.RoleInHotel)
+                        .FirstOrDefault()
                 })
                 .ToListAsync(cancellationToken);
 

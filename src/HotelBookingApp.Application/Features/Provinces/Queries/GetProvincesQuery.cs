@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.ProvinceDto;
 using HotelBookingApp.Application.Wrapper;
@@ -7,7 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.Application.Features.Provinces.Queries
 {
-    public class GetProvincesQuery : IRequest<Response<IEnumerable<ProvinceDto>>> { }
+    public class GetProvincesQuery : IRequest<Response<IEnumerable<ProvinceDto>>> 
+    { 
+        public bool IncludeHidden { get; set; } = false;
+    }
 
     public class GetProvincesQueryHandler : IRequestHandler<GetProvincesQuery, Response<IEnumerable<ProvinceDto>>>
     {
@@ -21,7 +24,12 @@ namespace HotelBookingApp.Application.Features.Provinces.Queries
 
         public async Task<Response<IEnumerable<ProvinceDto>>> Handle(GetProvincesQuery request, CancellationToken cancellationToken)
         {
-            var provinces = await _context.Provinces.ToListAsync(cancellationToken);
+            var query = _context.Provinces.AsQueryable();
+            if (!request.IncludeHidden)
+            {
+                query = query.Where(p => p.IsActive == true);
+            }
+            var provinces = await query.ToListAsync(cancellationToken);
             if (provinces == null) return new Response<IEnumerable<ProvinceDto>>("Lấy thông tin thất bại!");
             return new Response<IEnumerable<ProvinceDto>>(_mapper.Map<IEnumerable<ProvinceDto>>(provinces), "Lấy thông tin tỉnh và thành phố thành thành công!");
         }

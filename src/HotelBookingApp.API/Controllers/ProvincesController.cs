@@ -1,4 +1,4 @@
-﻿using HotelBookingApp.Application.Features.Provinces.Commands;
+using HotelBookingApp.Application.Features.Provinces.Commands;
 using HotelBookingApp.Application.Features.Provinces.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +14,7 @@ namespace HotelBookingApp.API.Controllers
         public ProvincesController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet] // Mọi người đều có thể xem danh sách tỉnh thành để chọn
-        public async Task<IActionResult> GetAll() => Ok(await _mediator.Send(new GetProvincesQuery()));
+        public async Task<IActionResult> GetAll([FromQuery] bool includeHidden = false) => Ok(await _mediator.Send(new GetProvincesQuery { IncludeHidden = includeHidden }));
 
         [HttpPost]
         [Authorize(Roles = "admin")]
@@ -24,8 +24,8 @@ namespace HotelBookingApp.API.Controllers
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> Update([FromBody] UpdateProvinceCommand command) => Ok(await _mediator.Send(command));
 
-        //[HttpDelete("{id}")]
-        //[Authorize(Roles = "admin")]
-        //public async Task<IActionResult> Delete(Guid id) => Ok(await _mediator.Send(new DeleteProvinceCommand(id)));
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> Delete(Guid id) => Ok(await _mediator.Send(new DeleteProvinceCommand { Id = id }));
     }
 }

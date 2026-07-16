@@ -1,4 +1,4 @@
-﻿using HotelBookingApp.Application.Common.Exceptions;
+using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.AmenityDto;
 using HotelBookingApp.Application.Wrapper;
@@ -11,6 +11,7 @@ namespace HotelBookingApp.Application.Features.Amenities.Commands
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
+        public string ApplicableTo { get; set; } = "both";
     }
 
     public class UpdateAmenityCategoryCommandHandler
@@ -31,10 +32,12 @@ namespace HotelBookingApp.Application.Features.Amenities.Commands
                 throw new ApiException($"Danh mục '{request.Name}' đã tồn tại!");
 
             category.Name = request.Name.Trim();
+            category.ApplicableTo = request.ApplicableTo.ToLower();
+            
             await _context.SaveChangesAsync(cancellationToken);
 
             return new Response<AmenityCategoryDto>(
-                new AmenityCategoryDto { Id = category.Id, Name = category.Name },
+                new AmenityCategoryDto { Id = category.Id, Name = category.Name, ApplicableTo = category.ApplicableTo },
                 "Cập nhật danh mục thành công!");
         }
     }

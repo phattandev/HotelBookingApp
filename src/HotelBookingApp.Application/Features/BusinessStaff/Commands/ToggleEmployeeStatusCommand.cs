@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,15 +27,15 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
             var business = await _context.Businesses.FirstOrDefaultAsync(b => b.OwnerId == request.PartnerId, cancellationToken);
             if (business == null) throw new ApiException("Hồ sơ doanh nghiệp không tồn tại.");
 
-            var employee = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.EmployeeId && u.BusinessId == business.Id, cancellationToken);
-            if (employee == null) throw new ApiException("Không tìm thấy nhân viên thuộc doanh nghiệp này.");
+            var staff = await _context.BusinessStaff.Include(bs => bs.User).FirstOrDefaultAsync(bs => bs.UserId == request.EmployeeId && bs.BusinessId == business.Id, cancellationToken);
+            if (staff == null) throw new ApiException("Không tìm thấy nhân viên thuộc doanh nghiệp này.");
 
-            employee.IsActive = !employee.IsActive; // Đảo trạng thái
-            employee.UpdatedAt = DateTime.UtcNow;
+            staff.User.IsActive = !staff.User.IsActive; // Đảo trạng thái
+            staff.User.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            string statusText = employee.IsActive ? "kích hoạt" : "vô hiệu hóa";
+            string statusText = staff.User.IsActive ? "kích hoạt" : "vô hiệu hóa";
             return new Response<string>($"Đã {statusText} tài khoản nhân viên.");
         }
     }

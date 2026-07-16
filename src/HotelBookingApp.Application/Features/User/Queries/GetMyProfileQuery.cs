@@ -1,4 +1,4 @@
-﻿using HotelBookingApp.Application.Common.Exceptions;
+using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.UserDto;
 using HotelBookingApp.Application.Wrapper;
@@ -55,7 +55,7 @@ namespace HotelBookingApp.Application.Features.Users.Queries
                     BusinessAddress = biz.BusinessAddress,
                     RepresentativeName = biz.RepresentativeName,
                     Position = biz.Position,
-                    VerificationStatus = biz.VerificationStatus
+                    VerificationStatus = biz.VerificationStatus.ToString()
                 };
             }
 

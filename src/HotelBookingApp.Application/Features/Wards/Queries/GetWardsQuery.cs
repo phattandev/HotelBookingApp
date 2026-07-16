@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.DTOs.WardDto;
 using HotelBookingApp.Application.Wrapper;
@@ -10,6 +10,7 @@ namespace HotelBookingApp.Application.Features.Wards.Queries
     public class GetWardsQuery : IRequest<Response<IEnumerable<WardDto>>>
     {
         public Guid? ProvinceId { get; set; }
+        public bool IncludeHidden { get; set; } = false;
     }
 
     public class GetWardsQueryHandler : IRequestHandler<GetWardsQuery, Response<IEnumerable<WardDto>>>
@@ -31,6 +32,11 @@ namespace HotelBookingApp.Application.Features.Wards.Queries
             if (request.ProvinceId.HasValue && request.ProvinceId != Guid.Empty)
             {
                 query = query.Where(w => w.ProvinceId == request.ProvinceId.Value);
+            }
+
+            if (!request.IncludeHidden)
+            {
+                query = query.Where(w => w.IsActive == true);
             }
 
             // Sắp xếp theo tên cho Dropdown dễ tìm

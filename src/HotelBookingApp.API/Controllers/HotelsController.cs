@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using HotelBookingApp.Application.Features.Hotels.Commands;
 using HotelBookingApp.Application.Features.Hotels.Queries;
 using MediatR;
@@ -31,6 +31,14 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> GetMyHotels()
         {
             var query = new GetMyHotelsQuery { PartnerId = GetUserId() };
+            return Ok(await _mediator.Send(query));
+        }
+
+        [HttpGet("my-hotels/{id}")]
+        [Authorize(Roles = "partner")]
+        public async Task<IActionResult> GetMyHotelDetail(Guid id)
+        {
+            var query = new GetPartnerHotelDetailQuery(GetUserId(), id);
             return Ok(await _mediator.Send(query));
         }
 

@@ -1,9 +1,9 @@
+using FluentValidation;
 using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.Wrapper;
 using HotelBookingApp.Domain.Models;
 using MediatR;
-using FluentValidation;
 
 namespace HotelBookingApp.Application.Features.Hotels.Commands
 {
@@ -12,6 +12,8 @@ namespace HotelBookingApp.Application.Features.Hotels.Commands
         public Guid HotelId { get; set; }
         /// <summary>"Approve" hoặc "Reject"</summary>
         public string Action { get; set; } = null!;
+        /// <summary>Bắt buộc khi Action = "Reject"</summary>
+        public string? RejectionReason { get; set; }
     }
 
     public class ReviewHotelCommandHandler : IRequestHandler<ReviewHotelCommand, Response<string>>
@@ -28,28 +30,34 @@ namespace HotelBookingApp.Application.Features.Hotels.Commands
             {
                 hotel.ApprovalStatus = HotelApprovalStatus.Approved;
                 hotel.IsActive = true;
+                hotel.RejectionReason = null;   // Xoá lý do cũ nếu có
+                hotel.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync(cancellationToken);
+                return new Response<string>($"Đã phê duyệt khách sạn '{hotel.Name}'. Khách sạn hiện đang hoạt động.");
             }
-            else
+            else if (request.Action.Equals("reject", StringComparison.OrdinalIgnoreCase))
             {
+                if (string.IsNullOrWhiteSpace(request.RejectionReason))
+                    throw new ApiException("Vui lòng nhập lý do từ chối để thông báo cho đối tác.");
+
                 hotel.ApprovalStatus = HotelApprovalStatus.Rejected;
                 hotel.IsActive = false;
+                hotel.RejectionReason = request.RejectionReason;
+                hotel.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync(cancellationToken);
+                return new Response<string>($"Đã từ chối hồ sơ khách sạn '{hotel.Name}'.");
             }
 
-            await _context.SaveChangesAsync(cancellationToken);
-            return new Response<string>($"Đã {request.Action} khách sạn {hotel.Name}.");
+            throw new ApiException("Hành động không hợp lệ. Chỉ chấp nhận 'approve' hoặc 'reject'.");
         }
     }
 
     public class ReviewHotelCommandValidator : AbstractValidator<ReviewHotelCommand>
     {
-        private static readonly string[] ValidActions = { "approve", "reject" };
-
         public ReviewHotelCommandValidator()
         {
             RuleFor(x => x.Action)
-                .NotEmpty().WithMessage("Ġành động không được để trống.")
-                .Must(a => ValidActions.Contains(a.ToLower()))
-                .WithMessage("Ġành động chỉ chấp nhận 'approve' hoặc 'reject'.");
+                .NotEmpty().WithMessage("Hành động không được để trống.");
         }
     }
 }

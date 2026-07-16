@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,8 +17,7 @@ public partial class User
     [Column("role_id")]
     public Guid RoleId { get; set; }
 
-    [Column("business_id")]
-    public Guid? BusinessId { get; set; }
+
 
     [Required]
     [MaxLength(100)]
@@ -56,10 +55,10 @@ public partial class User
     public bool IsActive { get; set; } = true;
 
     [Column("created_at")]
-    public DateTime? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Column("updated_at")]
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     [Column("refresh_token")]
     public string? RefreshToken { get; set; }
@@ -71,9 +70,7 @@ public partial class User
     [ForeignKey(nameof(RoleId))]
     public virtual Role Role { get; set; } = null!;
 
-    [ForeignKey(nameof(BusinessId))]
-    [InverseProperty(nameof(Business.Employees))] // Mapping 1: Nhân viên thuộc về Doanh nghiệp
-    public virtual Business? Business { get; set; }
+
 
     [InverseProperty(nameof(Business.Owner))] // Mapping 2: Các Doanh nghiệp mà User này làm chủ
     public virtual ICollection<Business> OwnedBusinesses { get; set; } = new List<Business>();

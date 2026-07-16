@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -6,10 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HotelBookingApp.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.Domain.Models
 {
     [Table("hotel_staff_assignments")]
+    [Index(nameof(UserId), Name = "idx_staff_assignments_user_id")]
     public class HotelStaffAssignment
     {
         [Key]
@@ -23,6 +25,11 @@ namespace HotelBookingApp.Domain.Models
         [Required]
         [Column("hotel_id")]
         public Guid HotelId { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        [Column("role_in_hotel")]
+        public string RoleInHotel { get; set; } = "staff"; // "manager" hoặc "staff"
 
         [Column("assigned_at")]
         public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
