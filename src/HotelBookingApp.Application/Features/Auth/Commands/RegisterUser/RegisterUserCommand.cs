@@ -35,7 +35,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterUser
             var emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email, cancellationToken);
             if (emailExists)
             {
-                throw new ApiException("Email này đã được sử dụng bởi một tài khoản khác.");
+                throw new ApiException("Email đã tồn tại.");
             }
 
             // 2. Khởi tạo đối tượng User mới

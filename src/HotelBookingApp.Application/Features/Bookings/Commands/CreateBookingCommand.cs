@@ -33,10 +33,14 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
         public async Task<Response<Guid>> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
         {
-            // 1. Validate ngày nhận phòng không phải là quá khứ và không được đặt cùng ngày
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            if (request.CheckInDate <= today)
-                throw new ApiException("Ngày nhận phòng phải từ ngày mai trở đi.");
+            // 1. Validate ngày nhận phòng không phải là quá khứ
+            // Dùng múìte giờ Việt Nam (UTC+7) để tránh lỗi ngược múc giờ
+            var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+                OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
+            var nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+            var today = DateOnly.FromDateTime(nowVn);
+            if (request.CheckInDate < today)
+                throw new ApiException("Ngày nhận phòng không được là ngày trong quá khứ.");
 
             // 2. Lấy thông tin loại phòng, bao gồm TotalRooms và BasePrice để tính toán
             var roomType = await _context.RoomTypes

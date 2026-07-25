@@ -130,7 +130,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
             var depositMsg = refundDepositAmount > 0
                 ? $" Tiền cọ {refundDepositAmount:N0}đ sẽ được hoàn trả trong vòng 3-5 ngày làm việc."
-                : (booking.PaymentStatus == PaymentStatus.Paid ? " Tiền cọ không được hoàn do hủy sau mốc chính sách." : "");
+                : (booking.PaymentStatus == PaymentStatus.Paid ? " Tiền cọc không được hoàn do hủy sau mốc chính sách." : "");
 
             var result = new CancelBookingResultDto
             {

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using HotelBookingApp.Application.Features.BusinessStaff.Commands;
 using HotelBookingApp.Application.Features.BusinessStaff.Queries;
 using MediatR;
@@ -25,12 +25,27 @@ namespace HotelBookingApp.API.Controllers
             return Ok(response);
         }
 
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetStats([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            var query = new GetBusinessStatsQuery { UserId = GetPartnerId(), FromDate = fromDate, ToDate = toDate };
+            return Ok(await _mediator.Send(query));
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeCommand command)
         {
             command.PartnerId = GetPartnerId();
             var response = await _mediator.Send(command);
             return Ok(response);
+        }
+
+        [HttpPut("{employeeId}")]
+        public async Task<IActionResult> UpdateEmployee(Guid employeeId, [FromBody] UpdateEmployeeCommand command)
+        {
+            command.PartnerId = GetPartnerId();
+            command.EmployeeId = employeeId;
+            return Ok(await _mediator.Send(command));
         }
 
         [HttpPatch("{employeeId}/toggle-status")]

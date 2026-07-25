@@ -27,8 +27,8 @@ namespace HotelBookingApp.API.Controllers
         }
 
         [HttpGet("stats")]
-        public async Task<IActionResult> GetStats()
-            => Ok(await _mediator.Send(new GetAdminStatsQuery()));
+        public async Task<IActionResult> GetStats([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+            => Ok(await _mediator.Send(new GetAdminStatsQuery { FromDate = fromDate, ToDate = toDate }));
 
         [HttpPut("{id}/review")]
         public async Task<IActionResult> ReviewBusiness(Guid id, [FromBody] ReviewBusinessRequest request)
