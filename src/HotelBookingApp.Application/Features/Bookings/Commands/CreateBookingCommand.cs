@@ -33,15 +33,6 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
         public async Task<Response<Guid>> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
         {
-            // 1. Validate ngày nhận phòng không phải là quá khứ
-            // Dùng múìte giờ Việt Nam (UTC+7) để tránh lỗi ngược múc giờ
-            var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
-                OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
-            var nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
-            var today = DateOnly.FromDateTime(nowVn);
-            if (request.CheckInDate < today)
-                throw new ApiException("Ngày nhận phòng không được là ngày trong quá khứ.");
-
             // 2. Lấy thông tin loại phòng, bao gồm TotalRooms và BasePrice để tính toán
             var roomType = await _context.RoomTypes
                 .Include(rt => rt.Hotel)
@@ -60,18 +51,11 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                 throw new ApiException("Bạn không thể tự đặt phòng tại khách sạn của chính mình.");
 
             // Kiểm tra số lượng khách
-            if (request.NumAdults < 1) throw new ApiException("Số người lớn tối thiểu là 1.");
-            if (request.NumChildren < 0) throw new ApiException("Số trẻ em không được âm.");
             if (request.NumAdults > roomType.MaxAdults * request.NumRooms || request.NumChildren > roomType.MaxChildren * request.NumRooms)
                 throw new ApiException($"Sức chứa tối đa của 1 phòng là {roomType.MaxAdults} người lớn và {roomType.MaxChildren} trẻ em. Vui lòng chọn thêm số lượng phòng.");
 
             // 4. Tính số đêm lưu trú
             var numNights = request.CheckOutDate.DayNumber - request.CheckInDate.DayNumber;
-            if (numNights <= 0)
-                throw new ApiException("Ngày trả phòng phải sau ngày nhận phòng.");
-            if (numNights > 30)
-                throw new ApiException("Hệ thống chỉ hỗ trợ đặt phòng tối đa 30 đêm.");
-
             // Bọc toàn bộ quá trình kiểm tra phòng và tạo booking trong execution strategy + transaction
             // (cần dùng CreateExecutionStrategy để tương thích với EnableRetryOnFailure)
             Guid newBookingId = Guid.Empty;
@@ -164,10 +148,19 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
         {
             RuleFor(x => x.RoomTypeId).NotEmpty();
 
-            RuleFor(x => x.CheckInDate).NotEmpty();
+            RuleFor(x => x.CheckInDate).NotEmpty()
+                .Must(checkIn =>
+                {
+                    var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
+                    var nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+                    var today = DateOnly.FromDateTime(nowVn);
+                    return checkIn >= today;
+                }).WithMessage("Ngày nhận phòng không được là ngày trong quá khứ.");
 
             RuleFor(x => x.CheckOutDate).NotEmpty()
-                .GreaterThan(x => x.CheckInDate).WithMessage("Ngày trả phòng phải sau ngày nhận phòng.");
+                .GreaterThan(x => x.CheckInDate).WithMessage("Ngày trả phòng phải sau ngày nhận phòng.")
+                .Must((req, checkOut) => (checkOut.DayNumber - req.CheckInDate.DayNumber) <= 30)
+                .WithMessage("Hệ thống chỉ hỗ trợ đặt phòng tối đa 30 đêm.");
 
             RuleFor(x => x.NumRooms)
                 .GreaterThanOrEqualTo(1).WithMessage("Số phòng ít nhất là 1.");
@@ -179,15 +172,19 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                 .GreaterThanOrEqualTo(0).WithMessage("Số trẻ em không được âm.");
 
             RuleFor(x => x.GuestName)
-                .NotEmpty().WithMessage("Vui lòng nhập tên người đặt.");
+                .NotEmpty().WithMessage("Vui lòng nhập tên người đặt.")
+                .Matches(@"^[\p{L}\s]+$").WithMessage("Tên người đặt không được chứa số hoặc ký tự đặc biệt.");
 
             RuleFor(x => x.GuestPhone)
                 .NotEmpty().WithMessage("Vui lòng nhập số điện thoại.")
-                .Matches(@"^\d{10,11}$").WithMessage("Số điện thoại phải gồm 10-11 chữ số.");
+                .Matches(@"^(0[3|5|7|8|9])[0-9]{8}$").WithMessage("Số điện thoại không hợp lệ (phải thuộc các đầu số Việt Nam hợp lệ và đủ 10 số).");
 
             RuleFor(x => x.GuestEmail)
                 .NotEmpty().WithMessage("Vui lòng nhập email.")
                 .Matches(@"^[^@\s]+@[^@\s]+\.[^@\s]+$").WithMessage("Email không hợp lệ (phải có @ và tên miền hợp lệ).");
+                
+            RuleFor(x => x.SpecialRequests)
+                .MaximumLength(500).WithMessage("Yêu cầu đặc biệt tối đa 500 ký tự.");
         }
     }
 }

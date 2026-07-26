@@ -1,25 +1,12 @@
 using HotelBookingApp.Application.Common.Interfaces;
+using HotelBookingApp.Application.DTOs.HotelDto;
 using HotelBookingApp.Application.Wrapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
 
 namespace HotelBookingApp.Application.Features.Hotels.Queries
 {
-    /// <summary>
-    /// DTO trả về cho mỗi khách sạn trong kết quả tìm kiếm.
-    /// </summary>
-    public class HotelSearchResultDto
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = null!;
-        public string AddressLine { get; set; } = null!;
-        public string ProvinceName { get; set; } = string.Empty;
-        public string WardName { get; set; } = string.Empty;
-        public int? StarRating { get; set; }
-        public string? PrimaryImageUrl { get; set; }   // Ảnh đại diện (isPrimary hoặc ảnh đầu)
-        public decimal? MinPrice { get; set; }          // Giá phòng thấp nhất trong KS
-    }
-
     /// <summary>
     /// Query tìm kiếm khách sạn cho trang public (không cần đăng nhập).
     /// Lọc theo tên/địa điểm, khoảng giá, tiện nghi khách sạn, tiện nghi phòng và tên loại phòng.
@@ -159,6 +146,18 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
             }).ToList();
 
             return new PaginatedResponse<HotelSearchResultDto>(result, totalCount, request.Page, request.PageSize);
+        }
+    }
+
+    public class SearchHotelsQueryValidator : FluentValidation.AbstractValidator<SearchHotelsQuery>
+    {
+        public SearchHotelsQueryValidator()
+        {
+            RuleFor(x => x.Page).GreaterThanOrEqualTo(1).WithMessage("Trang phải lớn hơn hoặc bằng 1.");
+            RuleFor(x => x.PageSize).GreaterThanOrEqualTo(1).WithMessage("Số lượng kết quả trên trang phải lớn hơn hoặc bằng 1.");
+            RuleFor(x => x.CheckOut)
+                .GreaterThan(x => x.CheckIn).When(x => x.CheckIn.HasValue && x.CheckOut.HasValue)
+                .WithMessage("Ngày trả phòng phải sau ngày nhận phòng.");
         }
     }
 }

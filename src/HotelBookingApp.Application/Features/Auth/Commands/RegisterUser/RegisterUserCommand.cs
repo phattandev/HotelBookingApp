@@ -90,7 +90,11 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterUser
 
             RuleFor(p => p.Password)
                 .NotEmpty().WithMessage("Mật khẩu không được để trống.")
-                .MinimumLength(6).WithMessage("Mật khẩu phải có ít nhất 6 ký tự.");
+                .MinimumLength(8).WithMessage("Mật khẩu phải có ít nhất 8 ký tự.")
+                .Matches(@"[A-Z]").WithMessage("Mật khẩu phải chứa ít nhất 1 chữ hoa.")
+                .Matches(@"[a-z]").WithMessage("Mật khẩu phải chứa ít nhất 1 chữ thường.")
+                .Matches(@"[0-9]").WithMessage("Mật khẩu phải chứa ít nhất 1 chữ số.")
+                .Matches(@"[\!\?\*\.\@\$\%\^\&\+\=]").WithMessage("Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.");
 
             RuleFor(p => p.ConfirmPassword)
                 .NotEmpty().WithMessage("Xác nhận mật khẩu không được để trống.")
