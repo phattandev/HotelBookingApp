@@ -72,7 +72,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                             (b.Status == BookingStatus.Pending || b.Status == BookingStatus.Approved || b.Status == BookingStatus.Confirmed) &&
                             b.CheckInDate < request.CheckOutDate &&
                             b.CheckOutDate > request.CheckInDate)
-                        .SumAsync(b => b.NumRooms, cancellationToken);
+                        .SumAsync(b => (int?)b.NumRooms, cancellationToken) ?? 0;
 
                     var availableRooms = roomType.TotalRooms - bookedRooms;
                     if (availableRooms < request.NumRooms)

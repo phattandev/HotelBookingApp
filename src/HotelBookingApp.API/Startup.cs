@@ -9,6 +9,8 @@ using HotelBookingApp.Infrastructure.Jobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using HotelBookingApp.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.API
 {
@@ -43,9 +45,32 @@ namespace HotelBookingApp.API
 
 
             services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen(c =>
+            services.AddSwaggerGen(options =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "HotelBookingApp.API", Version = "v1" });
+                options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Description = "Enter JWT Token here",
+                    Name = "Authorization",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                });
+
+                options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                {
+                    {
+                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        {
+                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                            {
+                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
             });
 
             // Authentication với JWT Bearer
@@ -151,6 +176,24 @@ namespace HotelBookingApp.API
                 endpoints.MapControllers();
                 endpoints.MapHangfireDashboard();
             });
+
+            // Warmup Database & Services để tránh request đầu tiên bị chậm
+            using (var scope = app.ApplicationServices.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    // 1. Warmup EF Core (Database connection & Model compilation)
+                    var dbContext = services.GetRequiredService<ApplicationDbContext>();
+                    dbContext.Database.CanConnect();
+                    var _ = dbContext.Users.Include(u => u.Role).FirstOrDefault();
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warmup failed: {ex.Message}");
+                }
+            }
         }
     }
 }

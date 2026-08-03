@@ -51,7 +51,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Commands
                 TaxCode = request.TaxCode,
                 Description = request.Description,
                 StarRating = request.StarRating,
-                ApprovalStatus = HotelApprovalStatus.Pending,
+                ApprovalStatus = HotelApprovalStatus.Draft, // Cập nhật: Draft thay vì Pending
                 IsActive = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -60,7 +60,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Commands
             _context.Hotels.Add(hotel);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<Guid>(hotel.Id, "Đăng ký khách sạn thành công, vui lòng chờ Admin phê duyệt.");
+            return new Response<Guid>(hotel.Id, "Tạo khách sạn thành công. Hãy hoàn thiện thông tin trước khi gửi đăng ký.");
         }
     }
 

@@ -89,23 +89,22 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
             var roomTypeDtos = new List<RoomTypePublicDto>();
             foreach (var rt in hotel.RoomTypes)
             {
-                int? availableRooms = null;
+                var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
+                var nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+                var today = DateOnly.FromDateTime(nowVn);
 
-                if (request.CheckIn.HasValue && request.CheckOut.HasValue)
-                {
-                    // Đếm số phòng đã bị đặt (booking đang active và có ngày overlap với khoảng thời gian yêu cầu)
-                    // Overlap xảy ra khi: booking.CheckIn < request.CheckOut VÀ booking.CheckOut > request.CheckIn
-                    var bookedRooms = await _context.Bookings
-                        .Where(b =>
-                            b.RoomTypeId == rt.Id &&
-                            (b.Status == BookingStatus.Pending || b.Status == BookingStatus.Confirmed) &&
-                            b.CheckInDate < request.CheckOut.Value &&
-                            b.CheckOutDate > request.CheckIn.Value)
-                        .SumAsync(b => b.NumRooms, cancellationToken);
+                var checkInDate = request.CheckIn ?? today;
+                var checkOutDate = request.CheckOut ?? checkInDate.AddDays(1);
 
-                    // Số phòng còn lại = tổng phòng - số đã bị đặt (không âm)
-                    availableRooms = Math.Max(0, rt.TotalRooms - bookedRooms);
-                }
+                var bookedRooms = await _context.Bookings
+                    .Where(b =>
+                        b.RoomTypeId == rt.Id &&
+                        (b.Status == BookingStatus.Pending || b.Status == BookingStatus.Approved || b.Status == BookingStatus.Confirmed) &&
+                        b.CheckInDate < checkOutDate &&
+                        b.CheckOutDate > checkInDate)
+                    .SumAsync(b => (int?)b.NumRooms, cancellationToken) ?? 0;
+
+                int availableRooms = Math.Max(0, rt.TotalRooms - bookedRooms);
 
                 roomTypeDtos.Add(new RoomTypePublicDto
                 {

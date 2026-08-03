@@ -36,14 +36,14 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
         public async Task<Response<string>> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
         {
             var emailExists = await _context.Users.AnyAsync(u => u.Email == request.Email, cancellationToken);
-            if (emailExists) throw new ApiException("Email này đã tồn tại trong hệ thống.");
+            //if (emailExists) throw new ApiException("Email này đã tồn tại trong hệ thống.");
 
             var business = await _context.Businesses.FirstOrDefaultAsync(b => b.OwnerId == request.PartnerId, cancellationToken);
-            if (business == null) throw new ApiException("Hồ sơ doanh nghiệp không tồn tại.");
+            //if (business == null) throw new ApiException("Hồ sơ doanh nghiệp không tồn tại.");
 
             // Luôn gán role "staff" cho nhân viên mới — Partner sẽ phân công sau
             var staffRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name.ToLower() == "staff", cancellationToken);
-            if (staffRole == null) throw new ApiException("Role 'staff' chưa được cấu hình. Vui lòng liên hệ Admin.");
+            //if (staffRole == null) throw new ApiException("Role 'staff' chưa được cấu hình. Vui lòng liên hệ Admin.");
 
             var user = new User
             {
@@ -81,17 +81,17 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
     {
         public CreateEmployeeCommandValidator()
         {
-            RuleFor(x => x.FullName).NotEmpty().WithMessage("Họ tên không được để trống.")
-                .MaximumLength(100).WithMessage("Họ tên tối đa 100 ký tự.");
+            //RuleFor(x => x.FullName).NotEmpty().WithMessage("Họ tên không được để trống.")
+            //    .MaximumLength(100).WithMessage("Họ tên tối đa 100 ký tự.");
 
-            RuleFor(x => x.Email).NotEmpty().WithMessage("Email không được để trống.")
-                .EmailAddress().WithMessage("Email không đúng định dạng.");
+            //RuleFor(x => x.Email).NotEmpty().WithMessage("Email không được để trống.")
+            //    .EmailAddress().WithMessage("Email không đúng định dạng.");
 
-            RuleFor(x => x.Phone).NotEmpty().WithMessage("Số điện thoại không được để trống.")
-                .MaximumLength(15).WithMessage("Số điện thoại tối đa 15 ký tự.");
+            //RuleFor(x => x.Phone).NotEmpty().WithMessage("Số điện thoại không được để trống.")
+            //    .MaximumLength(15).WithMessage("Số điện thoại tối đa 15 ký tự.");
 
-            RuleFor(x => x.Password).NotEmpty().WithMessage("Mật khẩu không được để trống.")
-                .MinimumLength(6).WithMessage("Mật khẩu phải có ít nhất 6 ký tự.");
+            //RuleFor(x => x.Password).NotEmpty().WithMessage("Mật khẩu không được để trống.")
+            //    .MinimumLength(6).WithMessage("Mật khẩu phải có ít nhất 6 ký tự.");
         }
     }
 }

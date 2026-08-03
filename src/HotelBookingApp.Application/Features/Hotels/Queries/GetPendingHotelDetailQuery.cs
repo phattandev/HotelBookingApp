@@ -5,29 +5,23 @@ using HotelBookingApp.Application.Wrapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace HotelBookingApp.Application.Features.Manager.Queries
+namespace HotelBookingApp.Application.Features.Hotels.Queries
 {
-    /// <summary>Lấy thông tin đầy đủ của khách sạn đang được manager quản lý.</summary>
-    public class GetMyManagedHotelQuery : IRequest<Response<ManagedHotelDetailDto>>
+    public class GetPendingHotelDetailQuery : IRequest<Response<ManagedHotelDetailDto>>
     {
-        public Guid ManagerId { get; set; }
-        public GetMyManagedHotelQuery(Guid managerId) => ManagerId = managerId;
+        public Guid HotelId { get; set; }
     }
 
-    public class GetMyManagedHotelQueryHandler : IRequestHandler<GetMyManagedHotelQuery, Response<ManagedHotelDetailDto>>
+    public class GetPendingHotelDetailQueryHandler : IRequestHandler<GetPendingHotelDetailQuery, Response<ManagedHotelDetailDto>>
     {
         private readonly IApplicationDbContext _context;
-        public GetMyManagedHotelQueryHandler(IApplicationDbContext context) => _context = context;
+        public GetPendingHotelDetailQueryHandler(IApplicationDbContext context) => _context = context;
 
-        public async Task<Response<ManagedHotelDetailDto>> Handle(GetMyManagedHotelQuery request, CancellationToken cancellationToken)
+        public async Task<Response<ManagedHotelDetailDto>> Handle(GetPendingHotelDetailQuery request, CancellationToken cancellationToken)
         {
-            // Lấy phân công đang active của manager
-            var assignment = await _context.HotelStaffAssignments
-                .FirstOrDefaultAsync(a => a.UserId == request.ManagerId && a.IsActive, cancellationToken);
-            if (assignment == null)
-                throw new ApiException("Bạn chưa được phân công quản lý khách sạn nào.");
-
             var hotel = await _context.Hotels
+                .Include(h => h.Ward)
+                    .ThenInclude(w => w.Province)
                 .Include(h => h.Images)
                 .Include(h => h.HotelAmenities)
                     .ThenInclude(ha => ha.Amenity)
@@ -38,14 +32,11 @@ namespace HotelBookingApp.Application.Features.Manager.Queries
                     .ThenInclude(rt => rt.RoomTypeAmenities)
                         .ThenInclude(ra => ra.Amenity)
                             .ThenInclude(a => a.Category)
-                .FirstOrDefaultAsync(h => h.Id == assignment.HotelId, cancellationToken);
+                .FirstOrDefaultAsync(h => h.Id == request.HotelId, cancellationToken);
 
             if (hotel == null) throw new ApiException("Không tìm thấy khách sạn.");
 
-            var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
-            var nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
-            var today = DateOnly.FromDateTime(nowVn);
-            // Lấy danh sách booking đang active của khách sạn này ngày hôm nay
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var activeBookings = await _context.Bookings
                 .Where(b => b.HotelId == hotel.Id &&
                             (b.Status == Domain.Models.BookingStatus.Pending || b.Status == Domain.Models.BookingStatus.Approved || b.Status == Domain.Models.BookingStatus.Confirmed) &&
@@ -121,7 +112,7 @@ namespace HotelBookingApp.Application.Features.Manager.Queries
                     }).ToList()
             };
 
-            return new Response<ManagedHotelDetailDto>(dto, "Lấy thông tin khách sạn thành công.");
+            return new Response<ManagedHotelDetailDto>(dto, "Lấy thông tin chi tiết khách sạn thành công.");
         }
     }
 }

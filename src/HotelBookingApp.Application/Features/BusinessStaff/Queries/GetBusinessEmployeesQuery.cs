@@ -51,7 +51,8 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Queries
                     RoleInHotel = bs.User.StaffAssignments
                         .Where(a => a.IsActive)
                         .Select(a => a.RoleInHotel)
-                        .FirstOrDefault()
+                        .FirstOrDefault(),
+                    Title = "Nhan vien"
                 })
                 .ToListAsync(cancellationToken);
 

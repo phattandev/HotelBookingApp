@@ -47,9 +47,7 @@ namespace HotelBookingApp.Application.Features.Manager.Commands
 
             RuleFor(x => x.Description)
                 .MaximumLength(5000).When(x => x.Description != null)
-                .WithMessage("Mô tả tối đa 5000 ký tự.")
-                .Matches(@"^[\p{L}0-9\s.,!?'""()-]+$").When(x => !string.IsNullOrEmpty(x.Description))
-                .WithMessage("Mô tả không được chứa các ký tự đặc biệt không hợp lệ.");
+                .WithMessage("Mô tả tối đa 5000 ký tự.");
         }
     }
 }

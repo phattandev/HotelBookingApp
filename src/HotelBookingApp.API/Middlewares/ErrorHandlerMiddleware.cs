@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Text.Json;
 using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Wrapper;
@@ -29,10 +29,16 @@ namespace HotelBookingApp.Application.Middlewares
 
                 switch (error)
                 {
-                    case ValidationException e:
+                    case HotelBookingApp.Application.Common.Exceptions.ValidationException e:
                         response.StatusCode = (int)HttpStatusCode.BadRequest;
                         responseModel.Message = "Dữ liệu đầu vào không hợp lệ.";
                         responseModel.Errors = e.Errors.SelectMany(x => x.Value).ToArray();
+                        break;
+
+                    case FluentValidation.ValidationException e:
+                        response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        responseModel.Message = "Dữ liệu đầu vào không hợp lệ.";
+                        responseModel.Errors = e.Errors.Select(x => x.ErrorMessage).ToArray();
                         break;
 
                     case KeyNotFoundException e:
@@ -49,7 +55,7 @@ namespace HotelBookingApp.Application.Middlewares
 
                     default:
                         response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                        responseModel.Message = $"Internal Server Error: {error.Message} | Stack: {error.InnerException?.Message}";
+                        responseModel.Message = $"Internal Server Error: {error.Message} | Type: {error.GetType().FullName} | Stack: {error.InnerException?.Message}";
                         break;
                 }
 

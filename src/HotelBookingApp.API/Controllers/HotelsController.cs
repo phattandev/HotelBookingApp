@@ -42,6 +42,28 @@ namespace HotelBookingApp.API.Controllers
             return Ok(await _mediator.Send(query));
         }
 
+        [HttpPost("{id}/submit")]
+        [Authorize(Roles = "partner")]
+        public async Task<IActionResult> SubmitHotelRegistration(Guid id)
+        {
+            var command = new SubmitHotelRegistrationCommand
+            {
+                HotelId = id,
+                PartnerId = GetUserId()
+            };
+            return Ok(await _mediator.Send(command));
+        }
+
+        [HttpPut("{id}/basic-info")]
+        [Authorize(Roles = "partner,manager")]
+        public async Task<IActionResult> UpdateBasicInfo(Guid id, [FromBody] UpdateHotelBasicInfoCommand command)
+        {
+            command.HotelId = id;
+            command.UserId = GetUserId();
+            command.Role = User.IsInRole("partner") ? "partner" : "manager";
+            return Ok(await _mediator.Send(command));
+        }
+
         // --- ADMIN API ---
         [HttpPut("{id}/review")]
         [Authorize(Roles = "admin")]

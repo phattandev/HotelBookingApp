@@ -56,6 +56,7 @@ namespace HotelBookingApp.Application.Features.Admin.Queries
         public int CancelledBookings { get; set; }
         public decimal TotalRevenue { get; set; }   // chỉ Completed
         public decimal TotalDeposit { get; set; }   // PaymentStatus = Paid
+        public string Title { get; set; } = null!;
     }
 
     public class AdminBookingStatsDto
@@ -270,7 +271,8 @@ namespace HotelBookingApp.Application.Features.Admin.Queries
                         CompletedBookings = x.Completed,
                         CancelledBookings = x.Cancelled,
                         TotalRevenue = x.Revenue,
-                        TotalDeposit = x.Deposit
+                        TotalDeposit = x.Deposit,
+                        Title = "tieu de"
                     };
                 })
                 .OrderByDescending(x => x.TotalRevenue)

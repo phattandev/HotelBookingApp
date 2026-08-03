@@ -46,7 +46,7 @@ namespace HotelBookingApp.Application.Features.StaffAssignment.Commands
             var hotel = await _context.Hotels
                 .FirstOrDefaultAsync(h => h.Id == request.HotelId && h.BusinessId == business.Id, cancellationToken);
             if (hotel == null) throw new ApiException("Không tìm thấy khách sạn thuộc doanh nghiệp này.");
-            if (!hotel.IsActive) throw new ApiException("Khách sạn này chưa được phê duyệt hoặc đã bị vô hiệu hóa.");
+            // Bỏ qua check IsActive vì cần cho phép assign staff vào cả khách sạn Draft/Rejected để chuẩn bị thông tin
 
             // 4. [ANTI-ANOMALY] Đảm bảo nhân viên và khách sạn cùng thuộc một doanh nghiệp
             if (businessStaff.BusinessId != hotel.BusinessId)

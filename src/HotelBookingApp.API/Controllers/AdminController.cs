@@ -39,6 +39,13 @@ namespace HotelBookingApp.API.Controllers
             return Ok(await _mediator.Send(command));
         }
 
+        [HttpGet("hotels/{id}/detail")]
+        public async Task<IActionResult> GetHotelDetail(Guid id)
+        {
+            var query = new HotelBookingApp.Application.Features.Hotels.Queries.GetPendingHotelDetailQuery { HotelId = id };
+            return Ok(await _mediator.Send(query));
+        }
+
         // --- Quản lý tài khoản ---
         [HttpGet("accounts")]
         public async Task<IActionResult> GetAllUsers([FromQuery] AdminGetAllUsersQuery query)
