@@ -15,10 +15,7 @@ public class Booking
     [Column("id")]
     public Guid Id { get; set; }
 
-    /// <summary>Loại phòng được đặt.</summary>
-    [Required]
-    [Column("room_type_id")]
-    public Guid RoomTypeId { get; set; }
+    // Removed RoomTypeId and NumRooms
 
     /// <summary>Khách hàng đặt phòng (FK đến User).</summary>
     [Required]
@@ -35,10 +32,7 @@ public class Booking
     [Column("check_out_date", TypeName = "date")]
     public DateOnly CheckOutDate { get; set; }
 
-    /// <summary>Số phòng cùng loại được đặt trong một lần.</summary>
-    [Required]
-    [Column("num_rooms")]
-    public int NumRooms { get; set; } = 1;
+    // Removed NumRooms
 
     [Required]
     [Column("num_adults")]
@@ -150,8 +144,7 @@ public class Booking
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // --- Navigation Properties ---
-    [ForeignKey(nameof(RoomTypeId))]
-    public virtual RoomType RoomType { get; set; } = null!;
+    public virtual ICollection<BookingItem> Items { get; set; } = new List<BookingItem>();
 
     [ForeignKey(nameof(CustomerId))]
     public virtual User Customer { get; set; } = null!;

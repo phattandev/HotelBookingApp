@@ -22,6 +22,7 @@ namespace HotelBookingApp.Application.Common.Interfaces
         DbSet<Province> Provinces { get; set; }
         DbSet<Ward> Wards { get; set; }
         DbSet<Booking> Bookings { get; set; }
+        DbSet<BookingItem> BookingItems { get; set; }
         DbSet<HotelCancellationPolicy> HotelCancellationPolicies { get; set; }
         DbSet<HotelDepositPolicy> HotelDepositPolicies { get; set; }
         DbSet<Review> Reviews { get; set; }

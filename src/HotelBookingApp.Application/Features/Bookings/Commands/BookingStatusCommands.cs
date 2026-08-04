@@ -199,10 +199,11 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
             // Tìm đơn đặt phòng thuộc khách sạn Manager đang quản lý
             var booking = await _context.Bookings
-                .Include(b => b.RoomType)
+                .Include(b => b.Items)
+                    .ThenInclude(i => i.RoomType)
                 .FirstOrDefaultAsync(b =>
                     b.Id == request.BookingId &&
-                    b.RoomType.HotelId == assignment.HotelId,
+                    b.HotelId == assignment.HotelId,
                     cancellationToken);
 
             if (booking == null)

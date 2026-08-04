@@ -45,12 +45,13 @@ namespace HotelBookingApp.Application.Features.Manager.Queries
             var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
             var nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
             var today = DateOnly.FromDateTime(nowVn);
-            // Lấy danh sách booking đang active của khách sạn này ngày hôm nay
-            var activeBookings = await _context.Bookings
-                .Where(b => b.HotelId == hotel.Id &&
-                            (b.Status == Domain.Models.BookingStatus.Pending || b.Status == Domain.Models.BookingStatus.Approved || b.Status == Domain.Models.BookingStatus.Confirmed) &&
-                            b.CheckInDate <= today &&
-                            b.CheckOutDate > today)
+            // Lấy danh sách booking items đang active của khách sạn này ngày hôm nay
+            var activeBookingItems = await _context.BookingItems
+                .Include(bi => bi.Booking)
+                .Where(bi => bi.Booking.HotelId == hotel.Id &&
+                             (bi.Booking.Status == Domain.Models.BookingStatus.Pending || bi.Booking.Status == Domain.Models.BookingStatus.Approved || bi.Booking.Status == Domain.Models.BookingStatus.Confirmed) &&
+                             bi.Booking.CheckInDate <= today &&
+                             bi.Booking.CheckOutDate > today)
                 .ToListAsync(cancellationToken);
 
             var dto = new ManagedHotelDetailDto
@@ -86,7 +87,7 @@ namespace HotelBookingApp.Application.Features.Manager.Queries
                     }).ToList(),
                 RoomTypes = hotel.RoomTypes
                     .Select(rt => {
-                        var bookedRooms = activeBookings.Where(b => b.RoomTypeId == rt.Id).Sum(b => b.NumRooms);
+                        var bookedRooms = activeBookingItems.Where(bi => bi.RoomTypeId == rt.Id).Sum(bi => bi.NumRooms);
                         return new RoomTypeDto
                         {
                             Id = rt.Id,

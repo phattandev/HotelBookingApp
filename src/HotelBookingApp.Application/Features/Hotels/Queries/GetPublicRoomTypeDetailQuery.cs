@@ -39,13 +39,13 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
             var checkInDate = request.CheckIn ?? today;
             var checkOutDate = request.CheckOut ?? checkInDate.AddDays(1);
 
-            var bookedRooms = await _context.Bookings
-                .Where(b =>
-                    b.RoomTypeId == rt.Id &&
-                    (b.Status == Domain.Models.BookingStatus.Pending || b.Status == Domain.Models.BookingStatus.Approved || b.Status == Domain.Models.BookingStatus.Confirmed) &&
-                    b.CheckInDate < checkOutDate &&
-                    b.CheckOutDate > checkInDate)
-                .SumAsync(b => (int?)b.NumRooms, cancellationToken) ?? 0;
+            var bookedRooms = await _context.BookingItems
+                .Where(bi =>
+                    bi.RoomTypeId == rt.Id &&
+                    (bi.Booking.Status == Domain.Models.BookingStatus.Pending || bi.Booking.Status == Domain.Models.BookingStatus.Approved || bi.Booking.Status == Domain.Models.BookingStatus.Confirmed) &&
+                    bi.Booking.CheckInDate < checkOutDate &&
+                    bi.Booking.CheckOutDate > checkInDate)
+                .SumAsync(bi => (int?)bi.NumRooms, cancellationToken) ?? 0;
 
             int availableRooms = Math.Max(0, rt.TotalRooms - bookedRooms);
 

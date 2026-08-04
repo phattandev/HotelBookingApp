@@ -26,6 +26,7 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public virtual DbSet<Province> Provinces { get; set; }
     public virtual DbSet<Ward> Wards { get; set; }
     public virtual DbSet<Booking> Bookings { get; set; }
+    public virtual DbSet<BookingItem> BookingItems { get; set; }
     public virtual DbSet<HotelCancellationPolicy> HotelCancellationPolicies { get; set; }
     public virtual DbSet<HotelDepositPolicy> HotelDepositPolicies { get; set; }
     public virtual DbSet<Review> Reviews { get; set; }
@@ -112,10 +113,17 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
 
         // ── Quan hệ Booking ──────────────────────────────────────────────────
 
-        modelBuilder.Entity<Booking>()
-            .HasOne(b => b.RoomType)
+        // Removed RoomType relationship from Booking. Replaced with BookingItem.
+        modelBuilder.Entity<BookingItem>()
+            .HasOne(bi => bi.Booking)
+            .WithMany(b => b.Items)
+            .HasForeignKey(bi => bi.BookingId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<BookingItem>()
+            .HasOne(bi => bi.RoomType)
             .WithMany()
-            .HasForeignKey(b => b.RoomTypeId)
+            .HasForeignKey(bi => bi.RoomTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Booking>()

@@ -37,11 +37,12 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
             if (hotel == null) throw new ApiException("Không tìm thấy khách sạn.");
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            var activeBookings = await _context.Bookings
-                .Where(b => b.HotelId == hotel.Id &&
-                            (b.Status == Domain.Models.BookingStatus.Pending || b.Status == Domain.Models.BookingStatus.Approved || b.Status == Domain.Models.BookingStatus.Confirmed) &&
-                            b.CheckInDate <= today &&
-                            b.CheckOutDate > today)
+            var activeBookingItems = await _context.BookingItems
+                .Include(bi => bi.Booking)
+                .Where(bi => bi.Booking.HotelId == hotel.Id &&
+                             (bi.Booking.Status == Domain.Models.BookingStatus.Pending || bi.Booking.Status == Domain.Models.BookingStatus.Approved || bi.Booking.Status == Domain.Models.BookingStatus.Confirmed) &&
+                             bi.Booking.CheckInDate <= today &&
+                             bi.Booking.CheckOutDate > today)
                 .ToListAsync(cancellationToken);
 
             var dto = new ManagedHotelDetailDto
@@ -77,7 +78,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
                     }).ToList(),
                 RoomTypes = hotel.RoomTypes
                     .Select(rt => {
-                        var bookedRooms = activeBookings.Where(b => b.RoomTypeId == rt.Id).Sum(b => b.NumRooms);
+                        var bookedRooms = activeBookingItems.Where(bi => bi.RoomTypeId == rt.Id).Sum(bi => bi.NumRooms);
                         return new RoomTypeDto
                         {
                             Id = rt.Id,

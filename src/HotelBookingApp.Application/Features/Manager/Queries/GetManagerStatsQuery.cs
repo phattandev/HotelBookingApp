@@ -129,13 +129,14 @@ namespace HotelBookingApp.Application.Features.Manager.Queries
 
             var todayDate = DateOnly.FromDateTime(DateTime.UtcNow);
             var todayBookings = await _context.Bookings
+                .Include(b => b.Items)
                 .Where(b => b.HotelId == assignment.HotelId && 
                             b.CheckInDate <= todayDate && 
                             b.CheckOutDate > todayDate && 
                             (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Approved))
                 .ToListAsync(cancellationToken);
             
-            var roomsOccupied = todayBookings.Sum(b => b.NumRooms);
+            var roomsOccupied = todayBookings.Sum(b => b.Items.Sum(i => i.NumRooms));
             var totalRooms = await _context.RoomTypes
                 .Where(rt => rt.HotelId == assignment.HotelId && rt.IsActive)
                 .SumAsync(rt => rt.TotalRooms, cancellationToken);

@@ -287,7 +287,8 @@ namespace HotelBookingApp.Application.Features.Admin.Queries
                 .OrderByDescending(b => b.CreatedAt)
                 .Skip(skip)
                 .Take(request.PageSize)
-                .Include(b => b.RoomType)
+                .Include(b => b.Items)
+                    .ThenInclude(i => i.RoomType)
                 .Include(b => b.Hotel)
                     .ThenInclude(h => h.Business)
                 .ToListAsync(cancellationToken);
@@ -300,10 +301,10 @@ namespace HotelBookingApp.Application.Features.Admin.Queries
                 GuestEmail = b.GuestEmail,
                 HotelName = b.Hotel.Name,
                 BusinessName = b.Hotel.Business.BusinessName,
-                RoomTypeName = b.RoomType.Name,
+                RoomTypeName = string.Join(", ", b.Items.Select(i => i.RoomType.Name)),
                 CheckInDate = b.CheckInDate.ToString("yyyy-MM-dd"),
                 CheckOutDate = b.CheckOutDate.ToString("yyyy-MM-dd"),
-                NumRooms = b.NumRooms,
+                NumRooms = b.Items.Sum(i => i.NumRooms),
                 TotalPrice = b.TotalPrice,
                 DepositAmount = b.DepositAmount,
                 Status = b.Status.ToString(),
