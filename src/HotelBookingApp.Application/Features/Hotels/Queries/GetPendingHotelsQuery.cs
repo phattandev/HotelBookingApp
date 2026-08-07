@@ -31,7 +31,10 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
                     BusinessName = h.Business.BusinessName,
                     BusinessTaxCode = h.Business.TaxCode,
                     BusinessAddress = h.Business.BusinessAddress,
-                    RepresentativeName = h.Business.RepresentativeName
+                    RepresentativeName = h.Business.RepresentativeName,
+                    RejectionReason = h.RejectionReason,
+                    RoomTypeCount = h.RoomTypes.Count,
+                    StaffCount = h.StaffAssignments.Count(sa => sa.IsActive)
                 })
                 .ToListAsync(cancellationToken);
 

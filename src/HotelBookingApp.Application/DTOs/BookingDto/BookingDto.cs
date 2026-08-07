@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,7 +15,7 @@ namespace HotelBookingApp.Application.DTOs.BookingDto
         public string Status { get; set; } = null!;
         public DateOnly CheckInDate { get; set; }
         public DateOnly CheckOutDate { get; set; }
-        public int NumRooms { get; set; }
+    // Removed NumRooms
         public decimal TotalPrice { get; set; }
         public string GuestName { get; set; } = null!;
         public string GuestPhone { get; set; } = null!;
@@ -25,12 +25,10 @@ namespace HotelBookingApp.Application.DTOs.BookingDto
         public DateTime CreatedAt { get; set; }
 
         // Thông tin phòng và khách sạn (join để hiển thị)
-        public Guid RoomTypeId { get; set; }
-        public string RoomTypeName { get; set; } = null!;
-        public string HotelName { get; set; } = null!;
         public Guid HotelId { get; set; }
+        public string HotelName { get; set; } = null!;
         public string HotelAddress { get; set; } = null!;
-        public string? RoomImageUrl { get; set; }     // Ảnh đại diện của phòng
+        public List<BookingItemDto> Items { get; set; } = new();
 
         // Thông tin thanh toán cọc
         public string PaymentStatus { get; set; } = "Unpaid";

@@ -15,5 +15,6 @@ namespace HotelBookingApp.Application.DTOs.BusinessDto
         public Guid? AssignedHotelId { get; set; }
         public string? AssignedHotelName { get; set; }
         public string? RoleInHotel { get; set; }       // manager / receptionist
+        public string? Title { get; set; }
     }
 }

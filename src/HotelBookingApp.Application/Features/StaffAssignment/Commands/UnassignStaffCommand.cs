@@ -35,7 +35,7 @@ namespace HotelBookingApp.Application.Features.StaffAssignment.Commands
             // 3. Hủy phân công đang active
             var assignment = await _context.HotelStaffAssignments
                 .FirstOrDefaultAsync(a => a.UserId == request.EmployeeId && a.IsActive, cancellationToken);
-            if (assignment == null) throw new ApiException("Nhân viên này hiện không có phân công nào đang hoạt động.");
+            if (assignment == null) throw new ApiException("Nhân viên này chưa được phân công.");
 
             assignment.IsActive = false;
 

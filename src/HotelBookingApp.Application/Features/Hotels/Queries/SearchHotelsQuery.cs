@@ -1,25 +1,12 @@
 using HotelBookingApp.Application.Common.Interfaces;
+using HotelBookingApp.Application.DTOs.HotelDto;
 using HotelBookingApp.Application.Wrapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
 
 namespace HotelBookingApp.Application.Features.Hotels.Queries
 {
-    /// <summary>
-    /// DTO trả về cho mỗi khách sạn trong kết quả tìm kiếm.
-    /// </summary>
-    public class HotelSearchResultDto
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; } = null!;
-        public string AddressLine { get; set; } = null!;
-        public string ProvinceName { get; set; } = string.Empty;
-        public string WardName { get; set; } = string.Empty;
-        public int? StarRating { get; set; }
-        public string? PrimaryImageUrl { get; set; }   // Ảnh đại diện (isPrimary hoặc ảnh đầu)
-        public decimal? MinPrice { get; set; }          // Giá phòng thấp nhất trong KS
-    }
-
     /// <summary>
     /// Query tìm kiếm khách sạn cho trang public (không cần đăng nhập).
     /// Lọc theo tên/địa điểm, khoảng giá, tiện nghi khách sạn, tiện nghi phòng và tên loại phòng.
@@ -32,6 +19,10 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
 
         public DateOnly? CheckIn { get; set; }
         public DateOnly? CheckOut { get; set; }
+
+        public int NumRooms { get; set; } = 1;
+        public int NumAdults { get; set; } = 1;
+        public int NumChildren { get; set; } = 0;
 
         /// <summary>Giá tối thiểu (lọc theo BasePrice của RoomType thấp nhất).</summary>
         public decimal? MinPrice { get; set; }
@@ -76,6 +67,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
                 .Include(h => h.RoomTypes.Where(rt => rt.IsActive))
                     .ThenInclude(rt => rt.RoomTypeAmenities)
                 .Include(h => h.HotelAmenities)
+                    .ThenInclude(ha => ha.Amenity)
                 .AsQueryable();
 
             // Lọc theo từ khóa: so sánh với tên KS hoặc tên tỉnh (không phân biệt hoa thường)
@@ -120,16 +112,19 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
             var checkIn = request.CheckIn ?? default;
             var checkOut = request.CheckOut ?? default;
 
-            if (hasRoomAmenities || hasRoomNames || hasDates)
+            if (hasRoomAmenities || hasRoomNames || hasDates || request.NumAdults > 1 || request.NumChildren > 0)
             {
                 query = query.Where(h => h.RoomTypes.Any(rt => 
                     rt.IsActive &&
                     (!hasRoomNames || lowerNames.Contains(rt.Name.ToLower())) &&
                     (!hasRoomAmenities || roomAmenityIds.All(aid => rt.RoomTypeAmenities.Any(rta => rta.AmenityId == aid))) &&
-                    (!hasDates || rt.TotalRooms > (_context.Bookings.Where(b => b.RoomTypeId == rt.Id &&
-                            (b.Status == Domain.Models.BookingStatus.Pending || b.Status == Domain.Models.BookingStatus.Approved || b.Status == Domain.Models.BookingStatus.Confirmed) &&
-                            b.CheckInDate < checkOut && b.CheckOutDate > checkIn)
-                        .Sum(b => (int?)b.NumRooms) ?? 0))
+                    (rt.MaxAdults >= Math.Ceiling((double)request.NumAdults / request.NumRooms)) &&
+                    (rt.MaxChildren >= Math.Ceiling((double)request.NumChildren / request.NumRooms)) &&
+                    (!hasDates || (rt.TotalRooms - _context.BookingItems
+                            .Where(bi => bi.RoomTypeId == rt.Id &&
+                                (bi.Booking.Status == Domain.Models.BookingStatus.Pending || bi.Booking.Status == Domain.Models.BookingStatus.Approved || bi.Booking.Status == Domain.Models.BookingStatus.Confirmed) &&
+                                bi.Booking.CheckInDate < checkOut && bi.Booking.CheckOutDate > checkIn)
+                            .Sum(bi => (int?)bi.NumRooms) ?? 0) >= request.NumRooms)
                 ));
             }
 
@@ -154,11 +149,32 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
                     WardName = h.Ward?.Name ?? string.Empty,
                     StarRating = h.StarRating,
                     PrimaryImageUrl = primaryImage?.Url,
-                    MinPrice = activeRoomTypes.Any() ? activeRoomTypes.Min(rt => rt.BasePrice) : null
+                    MinPrice = activeRoomTypes.Any() ? activeRoomTypes.Min(rt => rt.BasePrice) : null,
+                    RoomTypes = activeRoomTypes.Take(2).Select(rt => new HotelSearchResultRoomTypeDto
+                    {
+                        Name = rt.Name,
+                        BasePrice = rt.BasePrice
+                    }).ToList(),
+                    Amenities = h.HotelAmenities.Where(ha => ha.Amenity != null).Take(5).Select(ha => new HotelSearchResultAmenityDto
+                    {
+                        Name = ha.Amenity.Name
+                    }).ToList()
                 };
             }).ToList();
 
             return new PaginatedResponse<HotelSearchResultDto>(result, totalCount, request.Page, request.PageSize);
+        }
+    }
+
+    public class SearchHotelsQueryValidator : FluentValidation.AbstractValidator<SearchHotelsQuery>
+    {
+        public SearchHotelsQueryValidator()
+        {
+            RuleFor(x => x.Page).GreaterThanOrEqualTo(1).WithMessage("Trang phải lớn hơn hoặc bằng 1.");
+            RuleFor(x => x.PageSize).GreaterThanOrEqualTo(1).WithMessage("Số lượng kết quả trên trang phải lớn hơn hoặc bằng 1.");
+            RuleFor(x => x.CheckOut)
+                .GreaterThan(x => x.CheckIn).When(x => x.CheckIn.HasValue && x.CheckOut.HasValue)
+                .WithMessage("Ngày trả phòng phải sau ngày nhận phòng.");
         }
     }
 }

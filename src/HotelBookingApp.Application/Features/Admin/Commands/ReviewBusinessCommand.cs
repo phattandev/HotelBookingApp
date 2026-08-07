@@ -36,17 +36,28 @@ namespace HotelBookingApp.Application.Features.Admin.Commands
             }
             else if (request.Action == "Reject")
             {
-                if (string.IsNullOrWhiteSpace(request.RejectionReason))
-                    throw new ApiException("Vui lòng nhập lý do từ chối để thông báo cho doanh nghiệp.");
-
                 business.VerificationStatus = BusinessVerificationStatus.Rejected;
                 business.RejectionReason = request.RejectionReason;
                 business.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
                 return new Response<string>("Đã từ chối hồ sơ doanh nghiệp.");
             }
+            return new Response<string>("Hành động không hợp lệ.");
+        }
+    }
 
-            throw new ApiException("Hành động không hợp lệ. Chỉ chấp nhận 'Approve' hoặc 'Reject'.");
+    public class ReviewBusinessCommandValidator : AbstractValidator<ReviewBusinessCommand>
+    {
+        public ReviewBusinessCommandValidator()
+        {
+            RuleFor(x => x.Action)
+                .NotEmpty().WithMessage("Vui lòng cung cấp hành động.")
+                .Must(x => x == "Approve" || x == "Reject")
+                .WithMessage("Hành động không hợp lệ. Chỉ chấp nhận 'Approve' hoặc 'Reject'.");
+
+            RuleFor(x => x.RejectionReason)
+                .NotEmpty().When(x => x.Action == "Reject")
+                .WithMessage("Vui lòng nhập lý do từ chối để thông báo cho doanh nghiệp.");
         }
     }
 }

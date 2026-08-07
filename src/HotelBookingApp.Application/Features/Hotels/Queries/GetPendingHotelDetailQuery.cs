@@ -7,27 +7,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.Application.Features.Hotels.Queries
 {
-    public class GetPartnerHotelDetailQuery : IRequest<Response<ManagedHotelDetailDto>>
+    public class GetPendingHotelDetailQuery : IRequest<Response<ManagedHotelDetailDto>>
     {
-        public Guid PartnerId { get; set; }
         public Guid HotelId { get; set; }
-        public GetPartnerHotelDetailQuery(Guid partnerId, Guid hotelId)
-        {
-            PartnerId = partnerId;
-            HotelId = hotelId;
-        }
     }
 
-    public class GetPartnerHotelDetailQueryHandler : IRequestHandler<GetPartnerHotelDetailQuery, Response<ManagedHotelDetailDto>>
+    public class GetPendingHotelDetailQueryHandler : IRequestHandler<GetPendingHotelDetailQuery, Response<ManagedHotelDetailDto>>
     {
         private readonly IApplicationDbContext _context;
-        public GetPartnerHotelDetailQueryHandler(IApplicationDbContext context) => _context = context;
+        public GetPendingHotelDetailQueryHandler(IApplicationDbContext context) => _context = context;
 
-        public async Task<Response<ManagedHotelDetailDto>> Handle(GetPartnerHotelDetailQuery request, CancellationToken cancellationToken)
+        public async Task<Response<ManagedHotelDetailDto>> Handle(GetPendingHotelDetailQuery request, CancellationToken cancellationToken)
         {
-            var business = await _context.Businesses.FirstOrDefaultAsync(b => b.OwnerId == request.PartnerId, cancellationToken);
-            if (business == null) throw new ApiException("Không tìm thấy hồ sơ doanh nghiệp.");
-
             var hotel = await _context.Hotels
                 .Include(h => h.Ward)
                     .ThenInclude(w => w.Province)
@@ -41,9 +32,9 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
                     .ThenInclude(rt => rt.RoomTypeAmenities)
                         .ThenInclude(ra => ra.Amenity)
                             .ThenInclude(a => a.Category)
-                .FirstOrDefaultAsync(h => h.Id == request.HotelId && h.BusinessId == business.Id, cancellationToken);
+                .FirstOrDefaultAsync(h => h.Id == request.HotelId, cancellationToken);
 
-            if (hotel == null) throw new ApiException("Không tìm thấy khách sạn hoặc bạn không có quyền xem.");
+            if (hotel == null) throw new ApiException("Không tìm thấy khách sạn.");
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var activeBookingItems = await _context.BookingItems

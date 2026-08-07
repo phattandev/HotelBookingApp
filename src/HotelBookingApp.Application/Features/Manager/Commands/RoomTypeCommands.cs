@@ -130,6 +130,18 @@ namespace HotelBookingApp.Application.Features.Manager.Commands
         }
     }
 
+    public class UpdateRoomTypeCommandValidator : AbstractValidator<UpdateRoomTypeCommand>
+    {
+        public UpdateRoomTypeCommandValidator()
+        {
+            RuleFor(x => x.Name).NotEmpty().WithMessage("Tên loại phòng không được để trống.")
+                .MaximumLength(150).WithMessage("Tên tối đa 150 ký tự.");
+            RuleFor(x => x.BasePrice).GreaterThan(0).WithMessage("Giá cơ bản phải lớn hơn 0.");
+            RuleFor(x => x.MaxAdults).GreaterThanOrEqualTo(1).WithMessage("Sức chứa người lớn ít nhất 1.");
+            RuleFor(x => x.TotalRooms).GreaterThanOrEqualTo(1).WithMessage("Số lượng phòng ít nhất 1.");
+        }
+    }
+
     // ====== DELETE (Soft Delete) ======
     public class DeleteRoomTypeCommand : IRequest<Response<string>>
     {

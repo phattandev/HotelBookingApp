@@ -28,9 +28,11 @@ namespace HotelBookingApp.Application.Features.Bookings.Queries
         public async Task<Response<List<BookingDto>>> Handle(GetMyBookingsQuery request, CancellationToken cancellationToken)
         {
             var query = _context.Bookings
-                .Include(b => b.RoomType)
-                    .ThenInclude(rt => rt.Hotel)
-                .Include(b => b.RoomType.Images)
+                .Include(b => b.Items)
+                    .ThenInclude(i => i.RoomType)
+                        .ThenInclude(rt => rt.Hotel)
+                .Include(b => b.Items)
+                    .ThenInclude(i => i.RoomType.Images)
                 .Where(b => b.CustomerId == request.CustomerId)
                 .AsQueryable();
 
@@ -77,9 +79,11 @@ namespace HotelBookingApp.Application.Features.Bookings.Queries
         public async Task<Response<BookingDto>> Handle(GetBookingDetailQuery request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
-                .Include(b => b.RoomType)
-                    .ThenInclude(rt => rt.Hotel)
-                .Include(b => b.RoomType.Images)
+                .Include(b => b.Items)
+                    .ThenInclude(i => i.RoomType)
+                        .ThenInclude(rt => rt.Hotel)
+                .Include(b => b.Items)
+                    .ThenInclude(i => i.RoomType.Images)
                 .FirstOrDefaultAsync(b =>
                     b.Id == request.BookingId &&
                     b.CustomerId == request.CustomerId,
@@ -118,10 +122,12 @@ namespace HotelBookingApp.Application.Features.Bookings.Queries
 
             // Lấy tất cả đơn thuộc các phòng của khách sạn này
             var query = _context.Bookings
-                .Include(b => b.RoomType)
-                    .ThenInclude(rt => rt.Hotel)
-                .Include(b => b.RoomType.Images)
-                .Where(b => b.RoomType.HotelId == assignment.HotelId)
+                .Include(b => b.Items)
+                    .ThenInclude(i => i.RoomType)
+                        .ThenInclude(rt => rt.Hotel)
+                .Include(b => b.Items)
+                    .ThenInclude(i => i.RoomType.Images)
+                .Where(b => b.HotelId == assignment.HotelId)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(request.StatusFilter) &&
@@ -146,7 +152,19 @@ namespace HotelBookingApp.Application.Features.Bookings.Queries
     {
         internal static BookingDto MapToDto(Booking b, bool hasReview = false)
         {
-            var primaryImg = b.RoomType?.Images?.FirstOrDefault(i => i.IsPrimary) ?? b.RoomType?.Images?.FirstOrDefault();
+            var items = b.Items?.Select(i => new BookingItemDto
+            {
+                Id = i.Id,
+                RoomTypeId = i.RoomTypeId,
+                RoomTypeName = i.RoomType?.Name ?? string.Empty,
+                NumRooms = i.NumRooms,
+                UnitPrice = i.UnitPrice,
+                SubTotal = i.SubTotal,
+                RoomImageUrl = i.RoomType?.Images?.FirstOrDefault(img => img.IsPrimary)?.Url ?? i.RoomType?.Images?.FirstOrDefault()?.Url
+            }).ToList() ?? new List<BookingItemDto>();
+
+            var firstItem = b.Items?.FirstOrDefault();
+            var hotel = firstItem?.RoomType?.Hotel;
 
             // Nếu đơn đã duyệt nhưng DepositDeadline chưa được set (đơn cũ trước khi update logic),
             // tự tính lại deadline: 24h trước check-in, hoặc 4h ân hạn nếu đã qua mốc đó.
@@ -167,7 +185,6 @@ namespace HotelBookingApp.Application.Features.Bookings.Queries
                 Status = b.Status.ToString(),
                 CheckInDate = b.CheckInDate,
                 CheckOutDate = b.CheckOutDate,
-                NumRooms = b.NumRooms,
                 TotalPrice = b.TotalPrice,
                 GuestName = b.GuestName,
                 GuestPhone = b.GuestPhone,
@@ -175,12 +192,10 @@ namespace HotelBookingApp.Application.Features.Bookings.Queries
                 SpecialRequests = b.SpecialRequests,
                 CancelReason = b.CancelReason,
                 CreatedAt = b.CreatedAt,
-                RoomTypeId = b.RoomTypeId,
-                RoomTypeName = b.RoomType?.Name ?? string.Empty,
-                HotelName = b.RoomType?.Hotel?.Name ?? string.Empty,
-                HotelId = b.RoomType?.HotelId ?? Guid.Empty,
-                HotelAddress = b.RoomType?.Hotel?.AddressLine ?? string.Empty,
-                RoomImageUrl = primaryImg?.Url,
+                HotelId = b.HotelId,
+                HotelName = hotel?.Name ?? string.Empty,
+                HotelAddress = hotel?.AddressLine ?? string.Empty,
+                Items = items,
                 // Thanh toán cọc
                 PaymentStatus = b.PaymentStatus.ToString(),
                 DepositAmount = b.DepositAmount,

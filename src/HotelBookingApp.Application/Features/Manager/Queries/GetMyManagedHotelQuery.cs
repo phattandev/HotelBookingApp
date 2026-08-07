@@ -42,10 +42,26 @@ namespace HotelBookingApp.Application.Features.Manager.Queries
 
             if (hotel == null) throw new ApiException("Không tìm thấy khách sạn.");
 
+            var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
+            var nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+            var today = DateOnly.FromDateTime(nowVn);
+            // Lấy danh sách booking items đang active của khách sạn này ngày hôm nay
+            var activeBookingItems = await _context.BookingItems
+                .Include(bi => bi.Booking)
+                .Where(bi => bi.Booking.HotelId == hotel.Id &&
+                             (bi.Booking.Status == Domain.Models.BookingStatus.Pending || bi.Booking.Status == Domain.Models.BookingStatus.Approved || bi.Booking.Status == Domain.Models.BookingStatus.Confirmed) &&
+                             bi.Booking.CheckInDate <= today &&
+                             bi.Booking.CheckOutDate > today)
+                .ToListAsync(cancellationToken);
+
             var dto = new ManagedHotelDetailDto
             {
                 Id = hotel.Id,
                 Name = hotel.Name,
+                ProvinceName = hotel.Ward?.Province?.Name ?? string.Empty,
+                ProvinceId = hotel.Ward?.ProvinceId,
+                WardName = hotel.Ward?.Name ?? string.Empty,
+                WardId = hotel.WardId,
                 AddressLine = hotel.AddressLine,
                 Description = hotel.Description,
                 StarRating = hotel.StarRating,
@@ -70,34 +86,39 @@ namespace HotelBookingApp.Application.Features.Manager.Queries
                         ApplicableTo = ha.Amenity.Category.ApplicableTo
                     }).ToList(),
                 RoomTypes = hotel.RoomTypes
-                    .Select(rt => new RoomTypeDto
-                    {
-                        Id = rt.Id,
-                        Name = rt.Name,
-                        BasePrice = rt.BasePrice,
-                        MaxAdults = rt.MaxAdults,
-                        MaxChildren = rt.MaxChildren,
-                        TotalRooms = rt.TotalRooms,
-                        Description = rt.Description,
-                        IsActive = rt.IsActive,
-                        Images = rt.Images
-                            .OrderBy(i => i.DisplayOrder)
-                            .Select(i => new HotelImageDto
-                            {
-                                Id = i.Id,
-                                Url = i.Url,
-                                PublicId = i.PublicId,
-                                IsPrimary = i.IsPrimary,
-                                DisplayOrder = i.DisplayOrder
-                            }).ToList(),
-                        Amenities = rt.RoomTypeAmenities
-                            .Select(ra => new AmenityDto
-                            {
-                                Id = ra.AmenityId,
-                                Name = ra.Amenity.Name,
-                                CategoryName = ra.Amenity.Category.Name,
-                                ApplicableTo = ra.Amenity.Category.ApplicableTo
-                            }).ToList()
+                    .Select(rt => {
+                        var bookedRooms = activeBookingItems.Where(bi => bi.RoomTypeId == rt.Id).Sum(bi => bi.NumRooms);
+                        return new RoomTypeDto
+                        {
+                            Id = rt.Id,
+                            Name = rt.Name,
+                            BasePrice = rt.BasePrice,
+                            MaxAdults = rt.MaxAdults,
+                            MaxChildren = rt.MaxChildren,
+                            TotalRooms = rt.TotalRooms,
+                            BookedRooms = bookedRooms,
+                            AvailableRooms = Math.Max(0, rt.TotalRooms - bookedRooms),
+                            Description = rt.Description,
+                            IsActive = rt.IsActive,
+                            Images = rt.Images
+                                .OrderBy(i => i.DisplayOrder)
+                                .Select(i => new HotelImageDto
+                                {
+                                    Id = i.Id,
+                                    Url = i.Url,
+                                    PublicId = i.PublicId,
+                                    IsPrimary = i.IsPrimary,
+                                    DisplayOrder = i.DisplayOrder
+                                }).ToList(),
+                            Amenities = rt.RoomTypeAmenities
+                                .Select(ra => new AmenityDto
+                                {
+                                    Id = ra.AmenityId,
+                                    Name = ra.Amenity.Name,
+                                    CategoryName = ra.Amenity.Category.Name,
+                                    ApplicableTo = ra.Amenity.Category.ApplicableTo
+                                }).ToList()
+                        };
                     }).ToList()
             };
 

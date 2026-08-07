@@ -14,5 +14,8 @@ namespace HotelBookingApp.Application.DTOs.HotelDto
         public string? BusinessTaxCode { get; set; }
         public string? BusinessAddress { get; set; }
         public string? RepresentativeName { get; set; }
+        public string? RejectionReason { get; set; }
+        public int RoomTypeCount { get; set; }
+        public int StaffCount { get; set; }
     }
 }

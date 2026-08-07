@@ -45,6 +45,19 @@ public class CreatePaymentUrlCommandHandler : IRequestHandler<CreatePaymentUrlCo
         if (booking.DepositAmount <= 0)
             return new Response<string>("Đơn này không yêu cầu cọc.");
 
+        // Lấy múi giờ VN
+        var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
+        var nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+        var today = DateOnly.FromDateTime(nowVn);
+
+        // Đã qua ngày trả phòng thì không cho thanh toán nữa
+        if (today > booking.CheckOutDate)
+            return new Response<string>("Đơn đặt phòng đã quá hạn trả phòng, không thể thanh toán.");
+
+        // Kiểm tra hạn chót thanh toán cọc
+        if (booking.DepositDeadline.HasValue && DateTime.UtcNow > booking.DepositDeadline.Value)
+            return new Response<string>("Đã quá hạn thanh toán tiền cọc cho đơn này.");
+
         var vnp_Returnurl = _configuration["VNPAY:ReturnUrl"];
         var vnp_Url = _configuration["VNPAY:BaseUrl"];
         var vnp_TmnCode = _configuration["VNPAY:TmnCode"];

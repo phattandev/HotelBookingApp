@@ -32,19 +32,22 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
             if (rt == null)
                 throw new ApiException("Không tìm thấy loại phòng hoặc loại phòng không hoạt động.");
 
-            int? availableRooms = null;
-            if (request.CheckIn.HasValue && request.CheckOut.HasValue)
-            {
-                var bookedRooms = await _context.Bookings
-                    .Where(b =>
-                        b.RoomTypeId == rt.Id &&
-                        (b.Status == Domain.Models.BookingStatus.Pending || b.Status == Domain.Models.BookingStatus.Confirmed) &&
-                        b.CheckInDate < request.CheckOut.Value &&
-                        b.CheckOutDate > request.CheckIn.Value)
-                    .SumAsync(b => b.NumRooms, cancellationToken);
+            var vnTimeZone = TimeZoneInfo.FindSystemTimeZoneById(OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh");
+            var nowVn = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vnTimeZone);
+            var today = DateOnly.FromDateTime(nowVn);
 
-                availableRooms = Math.Max(0, rt.TotalRooms - bookedRooms);
-            }
+            var checkInDate = request.CheckIn ?? today;
+            var checkOutDate = request.CheckOut ?? checkInDate.AddDays(1);
+
+            var bookedRooms = await _context.BookingItems
+                .Where(bi =>
+                    bi.RoomTypeId == rt.Id &&
+                    (bi.Booking.Status == Domain.Models.BookingStatus.Pending || bi.Booking.Status == Domain.Models.BookingStatus.Approved || bi.Booking.Status == Domain.Models.BookingStatus.Confirmed) &&
+                    bi.Booking.CheckInDate < checkOutDate &&
+                    bi.Booking.CheckOutDate > checkInDate)
+                .SumAsync(bi => (int?)bi.NumRooms, cancellationToken) ?? 0;
+
+            int availableRooms = Math.Max(0, rt.TotalRooms - bookedRooms);
 
             var dto = new RoomTypePublicDto
             {

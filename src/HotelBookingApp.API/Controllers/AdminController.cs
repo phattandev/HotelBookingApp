@@ -1,9 +1,11 @@
 using System.Security.Claims;
+using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.Features.Admin.Commands;
 using HotelBookingApp.Application.Features.Admin.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.API.Controllers
 {
@@ -13,10 +15,12 @@ namespace HotelBookingApp.API.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly IApplicationDbContext _context;
 
-        public AdminController(IMediator mediator)
+        public AdminController(IMediator mediator, IApplicationDbContext context)
         {
             _mediator = mediator;
+            _context = context;
         }
 
         private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -35,6 +39,13 @@ namespace HotelBookingApp.API.Controllers
             return Ok(await _mediator.Send(command));
         }
 
+        [HttpGet("hotels/{id}/detail")]
+        public async Task<IActionResult> GetHotelDetail(Guid id)
+        {
+            var query = new HotelBookingApp.Application.Features.Hotels.Queries.GetPendingHotelDetailQuery { HotelId = id };
+            return Ok(await _mediator.Send(query));
+        }
+
         // --- Quản lý tài khoản ---
         [HttpGet("accounts")]
         public async Task<IActionResult> GetAllUsers([FromQuery] AdminGetAllUsersQuery query)
@@ -51,6 +62,33 @@ namespace HotelBookingApp.API.Controllers
                 AdminId = GetUserId()
             };
             return Ok(await _mediator.Send(command));
+        }
+
+        // --- Quản lý đặt phòng toàn nền tảng ---
+
+        [HttpGet("booking-stats")]
+        public async Task<IActionResult> GetBookingStats([FromQuery] GetAdminBookingStatsQuery query)
+        {
+            return Ok(await _mediator.Send(query));
+        }
+
+        /// <summary>
+        /// Trả về danh sách doanh nghiệp và khách sạn cho dropdown bộ lọc.
+        /// </summary>
+        [HttpGet("filter-options")]
+        public async Task<IActionResult> GetFilterOptions()
+        {
+            var businesses = await _context.Businesses
+                .OrderBy(b => b.BusinessName)
+                .Select(b => new { id = b.Id, name = b.BusinessName })
+                .ToListAsync();
+
+            var hotels = await _context.Hotels
+                .OrderBy(h => h.Name)
+                .Select(h => new { id = h.Id, name = h.Name, businessId = h.BusinessId })
+                .ToListAsync();
+
+            return Ok(new { businesses, hotels });
         }
     }
 }

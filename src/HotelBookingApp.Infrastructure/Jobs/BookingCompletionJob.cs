@@ -32,8 +32,7 @@ public class BookingCompletionJob
         var vnToday = DateOnly.FromDateTime(vnNow);
 
         var confirmedBookings = await _context.Bookings
-            .Include(b => b.RoomType)
-                .ThenInclude(rt => rt.Hotel)
+            .Include(b => b.Hotel)
             .Where(b => b.Status == BookingStatus.Confirmed)
             .ToListAsync();
 
@@ -60,7 +59,7 @@ public class BookingCompletionJob
         {
             try
             {
-                var hotelName = booking.RoomType?.Hotel?.Name ?? "Khách sạn";
+                var hotelName = booking.Hotel?.Name ?? "Khách sạn";
                 await _emailService.SendPostCheckoutThankYouAsync(
                     booking.GuestEmail,
                     booking.GuestName,

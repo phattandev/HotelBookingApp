@@ -32,7 +32,10 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
                     AddressLine = h.AddressLine,
                     TaxCode = h.TaxCode,
                     ApprovalStatus = h.ApprovalStatus.ToString(),
-                    IsActive = h.IsActive
+                    IsActive = h.IsActive,
+                    RejectionReason = h.RejectionReason,
+                    RoomTypeCount = h.RoomTypes.Count,
+                    StaffCount = h.StaffAssignments.Count(sa => sa.IsActive)
                 })
                 .ToListAsync(cancellationToken);
 

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HotelBookingApp.Application.Common.Interfaces;
+﻿using HotelBookingApp.Application.Common.Interfaces;
 
 namespace HotelBookingApp.Infrastructure.Services
 {

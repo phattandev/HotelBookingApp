@@ -3,6 +3,7 @@ using System;
 using HotelBookingApp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HotelBookingApp.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260728182335_AddHotelDraftStatus")]
+    partial class AddHotelDraftStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,6 +158,10 @@ namespace HotelBookingApp.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("num_children");
 
+                    b.Property<int>("NumRooms")
+                        .HasColumnType("integer")
+                        .HasColumnName("num_rooms");
+
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("paid_at");
@@ -175,6 +182,10 @@ namespace HotelBookingApp.Infrastructure.Migrations
                     b.Property<decimal?>("RefundAmount")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("refund_amount");
+
+                    b.Property<Guid>("RoomTypeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("room_type_id");
 
                     b.Property<string>("SpecialRequests")
                         .HasColumnType("text")
@@ -201,43 +212,9 @@ namespace HotelBookingApp.Infrastructure.Migrations
 
                     b.HasIndex("HotelId");
 
-                    b.ToTable("bookings");
-                });
-
-            modelBuilder.Entity("HotelBookingApp.Domain.Models.BookingItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("BookingId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("booking_id");
-
-                    b.Property<int>("NumRooms")
-                        .HasColumnType("integer")
-                        .HasColumnName("num_rooms");
-
-                    b.Property<Guid>("RoomTypeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("room_type_id");
-
-                    b.Property<decimal>("SubTotal")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("sub_total");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("unit_price");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookingId");
-
                     b.HasIndex("RoomTypeId");
 
-                    b.ToTable("booking_items");
+                    b.ToTable("bookings");
                 });
 
             modelBuilder.Entity("HotelBookingApp.Domain.Models.Business", b =>
@@ -1079,26 +1056,15 @@ namespace HotelBookingApp.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Customer");
-
-                    b.Navigation("Hotel");
-                });
-
-            modelBuilder.Entity("HotelBookingApp.Domain.Models.BookingItem", b =>
-                {
-                    b.HasOne("HotelBookingApp.Domain.Models.Booking", "Booking")
-                        .WithMany("Items")
-                        .HasForeignKey("BookingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("HotelBookingApp.Domain.Models.RoomType", "RoomType")
                         .WithMany()
                         .HasForeignKey("RoomTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Booking");
+                    b.Navigation("Customer");
+
+                    b.Navigation("Hotel");
 
                     b.Navigation("RoomType");
                 });
@@ -1334,11 +1300,6 @@ namespace HotelBookingApp.Infrastructure.Migrations
             modelBuilder.Entity("HotelBookingApp.Domain.Models.AmenityCategory", b =>
                 {
                     b.Navigation("Amenities");
-                });
-
-            modelBuilder.Entity("HotelBookingApp.Domain.Models.Booking", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("HotelBookingApp.Domain.Models.Business", b =>

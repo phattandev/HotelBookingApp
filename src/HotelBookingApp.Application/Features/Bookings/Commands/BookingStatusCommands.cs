@@ -130,7 +130,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
             var depositMsg = refundDepositAmount > 0
                 ? $" Tiền cọ {refundDepositAmount:N0}đ sẽ được hoàn trả trong vòng 3-5 ngày làm việc."
-                : (booking.PaymentStatus == PaymentStatus.Paid ? " Tiền cọ không được hoàn do hủy sau mốc chính sách." : "");
+                : (booking.PaymentStatus == PaymentStatus.Paid ? " Tiền cọc không được hoàn do hủy sau mốc chính sách." : "");
 
             var result = new CancelBookingResultDto
             {
@@ -199,10 +199,11 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
             // Tìm đơn đặt phòng thuộc khách sạn Manager đang quản lý
             var booking = await _context.Bookings
-                .Include(b => b.RoomType)
+                .Include(b => b.Items)
+                    .ThenInclude(i => i.RoomType)
                 .FirstOrDefaultAsync(b =>
                     b.Id == request.BookingId &&
-                    b.RoomType.HotelId == assignment.HotelId,
+                    b.HotelId == assignment.HotelId,
                     cancellationToken);
 
             if (booking == null)

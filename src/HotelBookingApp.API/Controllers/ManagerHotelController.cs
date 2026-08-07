@@ -22,6 +22,13 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> GetMyHotel()
             => Ok(await _mediator.Send(new GetMyManagedHotelQuery(GetManagerId())));
 
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetStats([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            var query = new GetManagerStatsQuery { ManagerId = GetManagerId(), FromDate = fromDate, ToDate = toDate };
+            return Ok(await _mediator.Send(query));
+        }
+
         /// <summary>Cập nhật mô tả và số sao khách sạn.</summary>
         [HttpPut("info")]
         public async Task<IActionResult> UpdateInfo([FromBody] UpdateHotelInfoCommand command)

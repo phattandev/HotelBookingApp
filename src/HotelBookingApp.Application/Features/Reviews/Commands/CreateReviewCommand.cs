@@ -41,7 +41,6 @@ public class CreateReviewCommandHandler : IRequestHandler<CreateReviewCommand, R
     {
         // 1. Lấy booking và kiểm tra quyền sở hữu
         var booking = await _context.Bookings
-            .Include(b => b.RoomType)
             .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 
         if (booking == null)
@@ -74,7 +73,7 @@ public class CreateReviewCommandHandler : IRequestHandler<CreateReviewCommand, R
         {
             Id = Guid.NewGuid(),
             BookingId = request.BookingId,
-            HotelId = booking.RoomType.HotelId,
+            HotelId = booking.HotelId,
             CustomerId = request.CustomerId,
             ScoreSpace = request.ScoreSpace,
             ScoreService = request.ScoreService,

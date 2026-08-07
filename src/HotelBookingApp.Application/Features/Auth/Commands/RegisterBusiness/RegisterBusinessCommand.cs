@@ -44,7 +44,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
             var emailExists = await _context.Users.AnyAsync(u => u.Email == request.RepresentativeEmail, cancellationToken);
             if (emailExists)
             {
-                throw new ApiException("Email làm việc này đã được đăng ký trong hệ thống giám sát.");
+                throw new ApiException("Email đã được đăng ký.");
             }
 
             // 2. Lấy Role 'partner'
@@ -85,7 +85,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
             _context.Businesses.Add(business);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<string>("Đăng ký doanh nghiệp thành công! Vui lòng chờ Admin phê duyệt trước khi đăng nhập.");
+            return new Response<string>("Đăng ký doanh nghiệp thành công! Vui lòng chờ Admin phê duyệt.");
         }
     }
 
