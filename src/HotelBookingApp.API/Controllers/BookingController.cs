@@ -108,11 +108,49 @@ namespace HotelBookingApp.API.Controllers
                 Action = request.Action,
                 CancelReason = request.CancelReason
             }));
+
+        /// <summary>Kiểm tra khả năng gia hạn đơn đặt phòng.</summary>
+        [HttpPost("{bookingId}/extension-availability")]
+        public async Task<IActionResult> CheckExtensionAvailability(Guid bookingId, [FromBody] ExtendBookingRequest request)
+        {
+            if (!DateOnly.TryParse(request.NewCheckOutDate, out var date))
+                return BadRequest(new { Message = "Ngày trả phòng mới không hợp lệ. Format yyyy-MM-dd." });
+
+            return Ok(await _mediator.Send(new CheckExtensionAvailabilityQuery
+            {
+                BookingId = bookingId,
+                ManagerId = GetManagerId(),
+                NewCheckOutDate = date,
+                Items = request.Items
+            }));
+        }
+
+        /// <summary>Gia hạn đơn đặt phòng (tạo đơn mới).</summary>
+        [HttpPost("{bookingId}/extend")]
+        public async Task<IActionResult> ExtendBooking(Guid bookingId, [FromBody] ExtendBookingRequest request)
+        {
+            if (!DateOnly.TryParse(request.NewCheckOutDate, out var date))
+                return BadRequest(new { Message = "Ngày trả phòng mới không hợp lệ. Format yyyy-MM-dd." });
+
+            return Ok(await _mediator.Send(new ExtendBookingCommand
+            {
+                BookingId = bookingId,
+                ManagerId = GetManagerId(),
+                NewCheckOutDate = date,
+                Items = request.Items
+            }));
+        }
     }
 
     public class UpdateStatusRequest
     {
         public string Action { get; set; } = null!;
         public string? CancelReason { get; set; }
+    }
+
+    public class ExtendBookingRequest
+    {
+        public string NewCheckOutDate { get; set; } = null!;
+        public List<HotelBookingApp.Application.Features.Bookings.Queries.ExtensionItemInput> Items { get; set; } = new();
     }
 }
