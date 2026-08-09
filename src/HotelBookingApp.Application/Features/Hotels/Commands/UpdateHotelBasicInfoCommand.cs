@@ -73,20 +73,4 @@ namespace HotelBookingApp.Application.Features.Hotels.Commands
         }
     }
 
-    public class UpdateHotelBasicInfoCommandValidator : AbstractValidator<UpdateHotelBasicInfoCommand>
-    {
-        public UpdateHotelBasicInfoCommandValidator()
-        {
-            RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("Tên khách sạn không được để trống.")
-                .MaximumLength(200).WithMessage("Tên khách sạn tối đa 200 ký tự.");
-
-            RuleFor(x => x.AddressLine)
-                .NotEmpty().WithMessage("Địa chỉ khách sạn không được để trống.")
-                .MaximumLength(255).WithMessage("Địa chỉ tối đa 255 ký tự.");
-
-            RuleFor(x => x.WardId)
-                .NotEmpty().WithMessage("Vui lòng chọn phường/xã cho địa chỉ khách sạn.");
-        }
-    }
 }
