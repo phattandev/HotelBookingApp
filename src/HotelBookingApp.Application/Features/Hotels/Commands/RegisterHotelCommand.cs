@@ -64,28 +64,4 @@ namespace HotelBookingApp.Application.Features.Hotels.Commands
         }
     }
 
-    public class RegisterHotelCommandValidator : AbstractValidator<RegisterHotelCommand>
-    {
-        public RegisterHotelCommandValidator()
-        {
-            RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("Tên khách sạn không được để trống.")
-                .MaximumLength(200).WithMessage("Tên khách sạn tối đa 200 ký tự.");
-
-            RuleFor(x => x.AddressLine)
-                .NotEmpty().WithMessage("Địa chỉ khách sạn không được để trống.")
-                .MaximumLength(255).WithMessage("Địa chỉ tối đa 255 ký tự.");
-
-            RuleFor(x => x.TaxCode)
-                .NotEmpty().WithMessage("Mã số thuế khách sạn không được để trống.")
-                .MaximumLength(50).WithMessage("Mã số thuế tối đa 50 ký tự.");
-
-            RuleFor(x => x.WardId)
-                .NotEmpty().WithMessage("Vui lòng chọn phường/xã cho địa chỉ khách sạn.");
-
-            RuleFor(x => x.StarRating)
-                .InclusiveBetween(1, 5).WithMessage("Số sao phải từ 1 đến 5.")
-                .When(x => x.StarRating.HasValue);
-        }
-    }
 }

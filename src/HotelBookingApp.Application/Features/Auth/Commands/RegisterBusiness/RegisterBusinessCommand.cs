@@ -88,33 +88,4 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
             return new Response<string>("Đăng ký doanh nghiệp thành công! Vui lòng chờ Admin phê duyệt.");
         }
     }
-
-    public class RegisterBusinessCommandValidator : AbstractValidator<RegisterBusinessCommand>
-    {
-        public RegisterBusinessCommandValidator()
-        {
-            RuleFor(p => p.BusinessName).NotEmpty().WithMessage("Tên doanh nghiệp không được bỏ trống.");
-            RuleFor(p => p.TaxCode).NotEmpty().WithMessage("Mã số thuế bắt buộc phải khai báo.");
-            RuleFor(p => p.BusinessAddress).NotEmpty().WithMessage("Địa chỉ đăng ký kinh doanh không hợp lệ nếu để trống.");
-
-            RuleFor(p => p.RepresentativeName).NotEmpty().WithMessage("Vui lòng cung cấp họ tên người đại diện.");
-            RuleFor(p => p.Position).NotEmpty().WithMessage("Chức vụ người đại diện không được để trống.");
-
-            RuleFor(p => p.RepresentativePhone)
-                .NotEmpty().WithMessage("Số điện thoại liên lạc không được trống.")
-                .Matches(@"^\d{10,11}$").WithMessage("Số điện thoại người đại diện phải gồm từ 10 đến 11 chữ số.");
-
-            RuleFor(p => p.RepresentativeEmail)
-                .NotEmpty().WithMessage("Email làm việc bắt buộc nhập.")
-                .Matches(@"^[^@\s]+@[^@\s]+\.[^@\s]+$").WithMessage("Email không hợp lệ (phải có @ và tên miền hợp lệ).");
-
-            RuleFor(p => p.Password)
-                .NotEmpty().WithMessage("Mật khẩu tài khoản không được để trống.")
-                .MinimumLength(6).WithMessage("Mật khẩu bảo mật phải tối thiểu từ 6 ký tự trở lên.");
-
-            RuleFor(p => p.ConfirmPassword)
-                .NotEmpty().WithMessage("Xác nhận mật khẩu thiết lập không được trống.")
-                .Equal(p => p.Password).WithMessage("Xác nhận mật khẩu doanh nghiệp không trùng khớp.");
-        }
-    }
 }

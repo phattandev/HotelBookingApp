@@ -59,12 +59,12 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.Login
                 // Nếu tài khoản partner mà không có hồ sơ DN → bất thường, không cho đăng nhập
                 if (business == null)
                 {
-                    throw new ApiException("Tài khoản doanh nghiệp của bạn chưa có hồ sơ hợp lệ. Vui lòng liên hệ Admin.");
+                    throw new ApiException("Tài khoản doanh nghiệp của bạn chưa có hồ sơ hợp lệ. Vui lòng liên hệ quản trị viên.");
                 }
 
                 if (business.VerificationStatus == BusinessVerificationStatus.Pending)
                 {
-                    throw new ApiException("Tài khoản doanh nghiệp của bạn đang chờ Admin phê duyệt. Vui lòng quay lại sau.");
+                    throw new ApiException("Tài khoản doanh nghiệp của bạn đang chờ Admin phê duyệt.");
                 }
                 else if (business.VerificationStatus == BusinessVerificationStatus.Rejected)
                 {
@@ -99,15 +99,4 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.Login
         }
     }
 
-    public class LoginCommandValidator : AbstractValidator<LoginCommand>
-    {
-        public LoginCommandValidator()
-        {
-            RuleFor(p => p.UsernameOrEmail)
-                .NotEmpty().WithMessage("Tài khoản hoặc Email không được để trống.");
-
-            RuleFor(p => p.Password)
-                .NotEmpty().WithMessage("Mật khẩu không được để trống.");
-        }
-    }
 }

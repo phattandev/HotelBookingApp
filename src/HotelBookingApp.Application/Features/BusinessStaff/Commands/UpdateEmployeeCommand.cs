@@ -64,23 +64,4 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
             return new Response<string>($"Đã cập nhật thông tin nhân viên '{user.FullName}' thành công.");
         }
     }
-
-    public class UpdateEmployeeCommandValidator : AbstractValidator<UpdateEmployeeCommand>
-    {
-        public UpdateEmployeeCommandValidator()
-        {
-            RuleFor(x => x.FullName)
-                .NotEmpty().WithMessage("Họ tên không được để trống.")
-                .MaximumLength(100).WithMessage("Họ tên tối đa 100 ký tự.");
-
-            RuleFor(x => x.Phone)
-                .NotEmpty().WithMessage("Số điện thoại không được để trống.")
-                .MaximumLength(15).WithMessage("Số điện thoại tối đa 15 ký tự.");
-
-            // Mật khẩu không bắt buộc nhưng nếu nhập phải đủ 6 ký tự
-            RuleFor(x => x.NewPassword)
-                .MinimumLength(6).WithMessage("Mật khẩu mới phải có ít nhất 6 ký tự.")
-                .When(x => !string.IsNullOrWhiteSpace(x.NewPassword));
-        }
-    }
 }

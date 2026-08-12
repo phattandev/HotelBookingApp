@@ -80,25 +80,4 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterUser
         }
     }
 
-    public class RegisterUserCommandValidator : AbstractValidator<RegisterUserCommand>
-    {
-        public RegisterUserCommandValidator()
-        {
-            RuleFor(p => p.Email)
-                .NotEmpty().WithMessage("Email không được để trống.")
-                .Matches(@"^[^@\s]+@[^@\s]+\.[^@\s]+$").WithMessage("Email không hợp lệ (phải có @ và tên miền hợp lệ).");
-
-            RuleFor(p => p.Password)
-                .NotEmpty().WithMessage("Mật khẩu không được để trống.")
-                .MinimumLength(8).WithMessage("Mật khẩu phải có ít nhất 8 ký tự.")
-                .Matches(@"[A-Z]").WithMessage("Mật khẩu phải chứa ít nhất 1 chữ hoa.")
-                .Matches(@"[a-z]").WithMessage("Mật khẩu phải chứa ít nhất 1 chữ thường.")
-                .Matches(@"[0-9]").WithMessage("Mật khẩu phải chứa ít nhất 1 chữ số.")
-                .Matches(@"[\!\?\*\.\@\$\%\^\&\+\=]").WithMessage("Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.");
-
-            RuleFor(p => p.ConfirmPassword)
-                .NotEmpty().WithMessage("Xác nhận mật khẩu không được để trống.")
-                .Equal(p => p.Password).WithMessage("Mật khẩu xác nhận không trùng khớp với mật khẩu đã nhập.");
-        }
-    }
 }
