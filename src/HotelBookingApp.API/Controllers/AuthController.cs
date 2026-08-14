@@ -1,3 +1,4 @@
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.DTOs.AuthDto;
 using HotelBookingApp.Application.Features.Auth.Commands.Login;
 using HotelBookingApp.Application.Features.Auth.Commands.RefreshToken;
@@ -24,28 +25,28 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginCommand command)
         {
             Response<AuthResponseDto> response = await _mediator.Send(command);
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
 
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
         {
             Response<AuthResponseDto>? response = await _mediator.Send(command);
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
 
         [HttpPost("register/user")]
         public async Task<IActionResult> RegisterUser([FromBody] RegisterUserCommand command)
         {
             Response<AuthResponseDto> response = await _mediator.Send(command);
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
 
         [HttpPost("register/business")]
         public async Task<IActionResult> RegisterBusiness([FromBody] RegisterBusinessCommand command)
         {
             Response<string> response = await _mediator.Send(command);
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
     }
 }

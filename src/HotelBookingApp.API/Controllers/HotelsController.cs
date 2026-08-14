@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Features.Hotels.Commands;
 using HotelBookingApp.Application.Features.Hotels.Queries;
 using MediatR;
@@ -24,14 +25,14 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> RegisterHotel([FromBody] RegisterHotelCommand command)
         {
             command.PartnerId = GetUserId();
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
         [HttpGet("my-hotels")]
         [Authorize(Roles = "partner")]
         public async Task<IActionResult> GetMyHotels()
         {
             var query = new GetMyHotelsQuery { PartnerId = GetUserId() };
-            return Ok(await _mediator.Send(query));
+            return this.OkOrBadRequest(await _mediator.Send(query));
         }
 
         [HttpGet("my-hotels/{id}")]
@@ -39,7 +40,7 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> GetMyHotelDetail(Guid id)
         {
             var query = new GetPartnerHotelDetailQuery(GetUserId(), id);
-            return Ok(await _mediator.Send(query));
+            return this.OkOrBadRequest(await _mediator.Send(query));
         }
 
         [HttpPost("{id}/submit")]
@@ -51,7 +52,7 @@ namespace HotelBookingApp.API.Controllers
                 HotelId = id,
                 PartnerId = GetUserId()
             };
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         [HttpPut("{id}/basic-info")]
@@ -61,7 +62,7 @@ namespace HotelBookingApp.API.Controllers
             command.HotelId = id;
             command.UserId = GetUserId();
             command.Role = User.IsInRole("partner") ? "partner" : "manager";
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         // --- ADMIN API ---
@@ -70,14 +71,14 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> ReviewHotel(Guid id, [FromBody] ReviewHotelCommand command)
         {
             command.HotelId = id;
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         [HttpGet("pending")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> GetPendingHotels()
         {
-            return Ok(await _mediator.Send(new GetPendingHotelsQuery()));
+            return this.OkOrBadRequest(await _mediator.Send(new GetPendingHotelsQuery()));
         }
     }
 }

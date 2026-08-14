@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Features.StaffAssignment.Commands;
 using HotelBookingApp.Application.Features.StaffAssignment.Queries;
 using MediatR;
@@ -22,7 +23,7 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> GetAssignments()
         {
             var response = await _mediator.Send(new GetStaffAssignmentsQuery(GetPartnerId()));
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
 
         /// <summary>Phân công nhân viên vào khách sạn với vai trò cụ thể.</summary>
@@ -30,7 +31,7 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> Assign([FromBody] AssignStaffCommand command)
         {
             command.PartnerId = GetPartnerId();
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         /// <summary>Hủy phân công của một nhân viên (trả về role staff).</summary>
@@ -42,7 +43,7 @@ namespace HotelBookingApp.API.Controllers
                 PartnerId = GetPartnerId(),
                 EmployeeId = employeeId
             };
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
     }
 }

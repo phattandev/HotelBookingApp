@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.Features.Admin.Commands;
 using HotelBookingApp.Application.Features.Admin.Queries;
+using HotelBookingApp.Application.Wrapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,28 +31,28 @@ namespace HotelBookingApp.API.Controllers
         [HttpGet("hotels")]
         public async Task<IActionResult> GetAllHotels([FromQuery] AdminGetAllHotelsQuery query)
         {
-            return Ok(await _mediator.Send(query));
+            return this.OkOrBadRequest(await _mediator.Send(query));
         }
 
         [HttpPatch("hotels/{id}/toggle-active")]
         public async Task<IActionResult> ToggleHotelActive(Guid id)
         {
             var command = new ToggleHotelActiveCommand { HotelId = id };
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         [HttpGet("hotels/{id}/detail")]
         public async Task<IActionResult> GetHotelDetail(Guid id)
         {
             var query = new HotelBookingApp.Application.Features.Hotels.Queries.GetPendingHotelDetailQuery { HotelId = id };
-            return Ok(await _mediator.Send(query));
+            return this.OkOrBadRequest(await _mediator.Send(query));
         }
 
         // --- Quản lý tài khoản ---
         [HttpGet("accounts")]
         public async Task<IActionResult> GetAllUsers([FromQuery] AdminGetAllUsersQuery query)
         {
-            return Ok(await _mediator.Send(query));
+            return this.OkOrBadRequest(await _mediator.Send(query));
         }
 
         [HttpPatch("accounts/{id}/toggle-status")]
@@ -61,7 +63,7 @@ namespace HotelBookingApp.API.Controllers
                 TargetUserId = id,
                 AdminId = GetUserId()
             };
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         // --- Quản lý đặt phòng toàn nền tảng ---
@@ -69,7 +71,7 @@ namespace HotelBookingApp.API.Controllers
         [HttpGet("booking-stats")]
         public async Task<IActionResult> GetBookingStats([FromQuery] GetAdminBookingStatsQuery query)
         {
-            return Ok(await _mediator.Send(query));
+            return this.OkOrBadRequest(await _mediator.Send(query));
         }
 
         /// <summary>
@@ -88,7 +90,7 @@ namespace HotelBookingApp.API.Controllers
                 .Select(h => new { id = h.Id, name = h.Name, businessId = h.BusinessId })
                 .ToListAsync();
 
-            return Ok(new { businesses, hotels });
+            return Ok(new Response<object>(new { businesses, hotels }));
         }
     }
 }
