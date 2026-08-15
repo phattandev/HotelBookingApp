@@ -7,6 +7,9 @@ namespace HotelBookingApp.Application.Common.Interfaces
         /// <summary>Upload một file ảnh lên Cloudinary trong folder chỉ định.</summary>
         Task<CloudinaryUploadResult> UploadImageAsync(Stream fileStream, string fileName, string folder);
 
+        /// <summary>Upload file thô (PDF, DOCX...) lên Cloudinary trong folder chỉ định.</summary>
+        Task<CloudinaryUploadResult> UploadRawFileAsync(Stream fileStream, string fileName, string folder);
+
         /// <summary>Xóa ảnh khỏi Cloudinary theo public_id.</summary>
         Task DeleteImageAsync(string publicId);
     }

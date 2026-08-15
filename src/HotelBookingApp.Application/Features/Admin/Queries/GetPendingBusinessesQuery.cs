@@ -6,6 +6,15 @@ using HotelBookingApp.Application.Common.Interfaces;
 
 namespace HotelBookingApp.Application.Features.Admin.Queries
 {
+    public class BusinessDocumentDto
+    {
+        public Guid Id { get; set; }
+        public string FileName { get; set; } = null!;
+        public string FileUrl { get; set; } = null!;
+        public long FileSizeBytes { get; set; }
+        public DateTime UploadedAt { get; set; }
+    }
+
     public class BusinessApprovalDto
     {
         public Guid Id { get; set; }
@@ -19,6 +28,7 @@ namespace HotelBookingApp.Application.Features.Admin.Queries
         public string OwnerEmail { get; set; } = null!;
         public string OwnerUsername { get; set; } = null!;
         public string OwnerPhone { get; set; } = null!;
+        public List<BusinessDocumentDto> Documents { get; set; } = new();
     }
 
     public class GetPendingBusinessesQuery : IRequest<Response<List<BusinessApprovalDto>>>
@@ -38,6 +48,7 @@ namespace HotelBookingApp.Application.Features.Admin.Queries
         {
             var businesses = await _context.Businesses
                 .Include(b => b.Owner)
+                .Include(b => b.Documents)
                 .Where(b => b.VerificationStatus == BusinessVerificationStatus.Pending)
                 .Select(b => new BusinessApprovalDto
                 {
@@ -51,7 +62,15 @@ namespace HotelBookingApp.Application.Features.Admin.Queries
                     VerificationStatus = b.VerificationStatus.ToString(),
                     OwnerEmail = b.Owner.Email,
                     OwnerUsername = b.Owner.Username,
-                    OwnerPhone = b.Owner.Phone ?? ""
+                    OwnerPhone = b.Owner.Phone ?? "",
+                    Documents = b.Documents.Select(d => new BusinessDocumentDto
+                    {
+                        Id = d.Id,
+                        FileName = d.FileName,
+                        FileUrl = d.FileUrl,
+                        FileSizeBytes = d.FileSizeBytes,
+                        UploadedAt = d.UploadedAt
+                    }).ToList()
                 })
                 .ToListAsync(cancellationToken);
 

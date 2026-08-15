@@ -68,6 +68,9 @@ namespace HotelBookingApp.Domain.Models
 
         [InverseProperty(nameof(Hotel.Business))]
         public virtual ICollection<Hotel> Hotels { get; set; } = new List<Hotel>();
+
+        [InverseProperty(nameof(BusinessDocument.Business))]
+        public virtual ICollection<BusinessDocument> Documents { get; set; } = new List<BusinessDocument>();
     }
 }
 

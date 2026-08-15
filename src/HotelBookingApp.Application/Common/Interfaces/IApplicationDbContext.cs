@@ -9,6 +9,7 @@ namespace HotelBookingApp.Application.Common.Interfaces
         DbSet<User> Users { get; set; }
         DbSet<Role> Roles { get; set; }
         DbSet<Business> Businesses { get; set; }
+        DbSet<BusinessDocument> BusinessDocuments { get; set; }
         DbSet<BusinessStaff> BusinessStaff { get; set; }
         DbSet<HotelStaffAssignment> HotelStaffAssignments { get; set; }
         DbSet<Hotel> Hotels { get; set; }

@@ -32,7 +32,7 @@ namespace HotelBookingApp.Application.Features.Admin.Commands
                 business.RejectionReason = null;    // Xoá lý do từ chối cũ nếu có
                 business.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
-                return new Response<string>("Đã phê duyệt doanh nghiệp thành công. Đối tác có thể đăng nhập và sử dụng hệ thống.");
+                return new Response<string> { Succeeded = true, Data = "Success", Message = "Đã phê duyệt doanh nghiệp thành công. Đối tác có thể đăng nhập và sử dụng hệ thống." };
             }
             else if (request.Action == "Reject")
             {
@@ -40,7 +40,7 @@ namespace HotelBookingApp.Application.Features.Admin.Commands
                 business.RejectionReason = request.RejectionReason;
                 business.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
-                return new Response<string>("Đã từ chối hồ sơ doanh nghiệp.");
+                return new Response<string> { Succeeded = true, Data = "Success", Message = "Đã từ chối hồ sơ doanh nghiệp." };
             }
             return new Response<string>("Hành động không hợp lệ.");
         }

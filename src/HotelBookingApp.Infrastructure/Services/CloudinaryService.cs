@@ -43,6 +43,39 @@ namespace HotelBookingApp.Infrastructure.Services
             return new CloudinaryUploadResult(result.SecureUrl.ToString(), result.PublicId);
         }
 
+        public async Task<CloudinaryUploadResult> UploadRawFileAsync(Stream fileStream, string fileName, string folder)
+        {
+            if (fileStream == null || fileStream.Length == 0)
+                throw new ArgumentException("File không hợp lệ.");
+
+            var ext = System.IO.Path.GetExtension(fileName).ToLowerInvariant();
+            
+            if (ext == ".pdf")
+            {
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(fileName, fileStream),
+                    Folder = folder
+                };
+                var result = await _cloudinary.UploadAsync(uploadParams);
+                if (result.Error != null)
+                    throw new InvalidOperationException($"Cloudinary upload lỗi: {result.Error.Message}");
+                return new CloudinaryUploadResult(result.SecureUrl.ToString(), result.PublicId);
+            }
+            else
+            {
+                var uploadParams = new RawUploadParams
+                {
+                    File = new FileDescription(fileName, fileStream),
+                    Folder = folder
+                };
+                var result = await _cloudinary.UploadAsync(uploadParams);
+                if (result.Error != null)
+                    throw new InvalidOperationException($"Cloudinary upload lỗi: {result.Error.Message}");
+                return new CloudinaryUploadResult(result.SecureUrl.ToString(), result.PublicId);
+            }
+        }
+
         public async Task DeleteImageAsync(string publicId)
         {
             var deleteParams = new DeletionParams(publicId);

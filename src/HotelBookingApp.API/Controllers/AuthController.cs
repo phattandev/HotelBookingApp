@@ -43,7 +43,8 @@ namespace HotelBookingApp.API.Controllers
         }
 
         [HttpPost("register/business")]
-        public async Task<IActionResult> RegisterBusiness([FromBody] RegisterBusinessCommand command)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> RegisterBusiness([FromForm] RegisterBusinessCommand command)
         {
             Response<string> response = await _mediator.Send(command);
             return this.OkOrBadRequest(response);
