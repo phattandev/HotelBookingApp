@@ -33,7 +33,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Commands
                 hotel.RejectionReason = null;   // Xoá lý do cũ nếu có
                 hotel.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
-                return new Response<string>($"Đã phê duyệt khách sạn '{hotel.Name}'. Khách sạn hiện đang hoạt động.");
+                return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã phê duyệt khách sạn '{hotel.Name}'. Khách sạn hiện đang hoạt động." };
             }
             else if (request.Action.Equals("reject", StringComparison.OrdinalIgnoreCase))
             {
@@ -45,7 +45,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Commands
                 hotel.RejectionReason = request.RejectionReason;
                 hotel.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
-                return new Response<string>($"Đã từ chối hồ sơ khách sạn '{hotel.Name}'.");
+                return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã từ chối hồ sơ khách sạn '{hotel.Name}'." };
             }
 
             throw new ApiException("Hành động không hợp lệ. Chỉ chấp nhận 'approve' hoặc 'reject'.");

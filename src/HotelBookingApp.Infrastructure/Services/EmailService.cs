@@ -61,7 +61,7 @@ public class EmailService : IEmailService
 
     public Task SendBookingApprovedAsync(string toEmail, string guestName, string bookingId, decimal depositAmount, DateTime deadline)
     {
-        string subject = $"[StayNow] Đơn đặt phòng #{bookingId[..8]} đã được duyệt - Yêu cầu đặt cọc";
+        string subject = $"[BookNow] Đơn đặt phòng #{bookingId[..8]} đã được duyệt - Yêu cầu đặt cọc";
         string vnTime = deadline.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
         string html = $@"
             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
@@ -73,8 +73,8 @@ public class EmailService : IEmailService
                 <p><i>Lưu ý: Nếu quá hạn mà chưa nhận được thanh toán, hệ thống sẽ tự động hủy đơn đặt phòng của bạn.</i></p>
                 <a href='http://localhost:5173/booking/{bookingId}' style='display:inline-block;background:#0ea5e9;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;margin-top:8px'>Thanh toán ngay →</a>
                 <br>
-                <p>Cảm ơn bạn đã tin tưởng StayNow!</p>
-                <p style='color: #888; font-size: 12px; text-align: center; margin-top: 20px;'>StayNow Team</p>
+                <p>Cảm ơn bạn đã tin tưởng BookNow!</p>
+                <p style='color: #888; font-size: 12px; text-align: center; margin-top: 20px;'>BookNow Team</p>
             </div>
         ";
         return SendAsync(toEmail, subject, html);
@@ -185,10 +185,10 @@ public class EmailService : IEmailService
     }
     public Task SendPostCheckoutThankYouAsync(string toEmail, string guestName, string bookingId, string hotelName, DateOnly checkOutDate)
     {
-        var subject = string.Format("[StayNow] Cam on ban da luu tru tai {0}!", hotelName);
+        var subject = string.Format("[BookNow] Cam on ban da luu tru tai {0}!", hotelName);
         var checkOutStr = checkOutDate.ToString("dd/MM/yyyy");
         var shortId = bookingId.Length >= 8 ? bookingId.Substring(0, 8).ToUpper() : bookingId.ToUpper();
-        var html = string.Format(@"<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto'><div style='background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:32px;border-radius:12px 12px 0 0;text-align:center'><h2 style='margin:0'>Cam on ban da luu tru!</h2><p style='margin:8px 0 0;opacity:0.85;font-size:14px'>Hy vong ban co mot ky nghi tuyet voi</p></div><div style='padding:28px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0 0 12px 12px'><p>Xin chao <strong>{0}</strong>,</p><p>Cam on ban da tin tuong lua chon <strong>{1}</strong> lam noi luu tru (Don <strong>#{2}</strong>).</p><div style='background:white;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:16px 0;text-align:center'><p style='margin:0;color:#6b7280;font-size:13px'>Ngay tra phong</p><p style='margin:4px 0 0;font-size:18px;font-weight:bold'>{3}</p></div><p>Chung toi mong duoc don tiep ban trong nhung chuyen di tiep theo!</p><div style='text-align:center;margin-top:24px'><a href='http://localhost:5173/my-bookings' style='display:inline-block;background:#6366f1;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold'>Xem lich su dat phong</a></div><p style='color:#94a3b8;font-size:12px;margin-top:24px;text-align:center'>Email nay duoc gui tu dong tu StayNow.</p></div></div>", guestName, hotelName, shortId, checkOutStr);
+        var html = string.Format(@"<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto'><div style='background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:32px;border-radius:12px 12px 0 0;text-align:center'><h2 style='margin:0'>Cam on ban da luu tru!</h2><p style='margin:8px 0 0;opacity:0.85;font-size:14px'>Hy vong ban co mot ky nghi tuyet voi</p></div><div style='padding:28px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0 0 12px 12px'><p>Xin chao <strong>{0}</strong>,</p><p>Cam on ban da tin tuong lua chon <strong>{1}</strong> lam noi luu tru (Don <strong>#{2}</strong>).</p><div style='background:white;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:16px 0;text-align:center'><p style='margin:0;color:#6b7280;font-size:13px'>Ngay tra phong</p><p style='margin:4px 0 0;font-size:18px;font-weight:bold'>{3}</p></div><p>Chung toi mong duoc don tiep ban trong nhung chuyen di tiep theo!</p><div style='text-align:center;margin-top:24px'><a href='http://localhost:5173/my-bookings' style='display:inline-block;background:#6366f1;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold'>Xem lich su dat phong</a></div><p style='color:#94a3b8;font-size:12px;margin-top:24px;text-align:center'>Email nay duoc gui tu dong tu BookNow.</p></div></div>", guestName, hotelName, shortId, checkOutStr);
         return SendAsync(toEmail, subject, html);
     }
 }

@@ -5,6 +5,7 @@ using HotelBookingApp.Application.DTOs.AuthDto;
 using HotelBookingApp.Application.Wrapper;
 using HotelBookingApp.Domain.Models;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
@@ -25,17 +26,22 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
         // Thiết lập mật khẩu bảo mật
         public string Password { get; set; } = null!;
         public string ConfirmPassword { get; set; } = null!;
+
+        // Tài liệu pháp lý
+        public List<IFormFile> Documents { get; set; } = new();
     }
 
     public class RegisterBusinessCommandHandler : IRequestHandler<RegisterBusinessCommand, Response<string>>
     {
         private readonly IApplicationDbContext _context;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public RegisterBusinessCommandHandler(IApplicationDbContext context, IPasswordHasher passwordHasher)
+        public RegisterBusinessCommandHandler(IApplicationDbContext context, IPasswordHasher passwordHasher, ICloudinaryService cloudinaryService)
         {
             _context = context;
             _passwordHasher = passwordHasher;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<Response<string>> Handle(RegisterBusinessCommand request, CancellationToken cancellationToken)
@@ -47,6 +53,13 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
                 throw new ApiException("Email đã được đăng ký.");
             }
 
+            // 1.5. Kiểm tra MST tồn tại
+            var taxCodeExists = await _context.Businesses.AnyAsync(b => b.TaxCode == request.TaxCode, cancellationToken);
+            if (taxCodeExists)
+            {
+                throw new ApiException("Mã số thuế này đã được đăng ký trên hệ thống.");
+            }
+
             // 2. Lấy Role 'partner'
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "partner", cancellationToken);
             if (role == null) throw new ApiException("Hệ thống chưa thiết lập Role 'partner' trong CSDL.");
@@ -56,7 +69,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
             var user = new User
             {
                 Id = userId,
-                Username = request.BusinessName, // Lưu ý: Username phải unique, nếu trùng tên Business sẽ lỗi, có thể cân nhắc dùng Email làm Username như bên RegisterUser
+                Username = request.RepresentativeEmail,
                 Email = request.RepresentativeEmail,
                 FullName = request.RepresentativeName, // Bổ sung FullName bắt buộc từ Entity User
                 Phone = request.RepresentativePhone,
@@ -67,7 +80,25 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
                 UpdatedAt = DateTime.UtcNow
             };
 
-            // 4. Khởi tạo Business (Hồ sơ doanh nghiệp)
+            // 4. Validate files (nếu có lỗi thì throw exception trước khi tạo user)
+            const int maxFileCount = 10;
+            const long maxFileSizeBytes = 10 * 1024 * 1024; // 10MB
+
+            if (request.Documents == null || request.Documents.Count == 0)
+                throw new ApiException("Vui lòng upload ít nhất 1 tài liệu pháp lý (PDF).");
+            if (request.Documents.Count > maxFileCount)
+                throw new ApiException($"Tối đa {maxFileCount} file được phép upload.");
+
+            foreach (var file in request.Documents)
+            {
+                if (file.Length > maxFileSizeBytes)
+                    throw new ApiException($"File '{file.FileName}' vượt quá giới hạn 10MB.");
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (ext != ".pdf")
+                    throw new ApiException($"File '{file.FileName}' không hợp lệ. Chỉ chấp nhận file PDF.");
+            }
+
+            // 5. Khởi tạo Business (Hồ sơ doanh nghiệp)
             var business = new Business
             {
                 Id = Guid.NewGuid(),
@@ -80,12 +111,31 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
                 VerificationStatus = BusinessVerificationStatus.Pending // Chờ Admin duyệt nếu cần
             };
 
-            // 5. Lưu vào DB (EF Core sẽ tự động bọc trong Transaction)
+            // 6. Upload file và tạo BusinessDocument records
+            var folder = $"business-documents/{business.Id}";
+            foreach (var file in request.Documents)
+            {
+                await using var stream = file.OpenReadStream();
+                var uploadResult = await _cloudinaryService.UploadRawFileAsync(stream, file.FileName, folder);
+                
+                _context.BusinessDocuments.Add(new BusinessDocument
+                {
+                    Id = Guid.NewGuid(),
+                    BusinessId = business.Id,
+                    FileName = file.FileName,
+                    FileUrl = uploadResult.Url,
+                    PublicId = uploadResult.PublicId,
+                    FileSizeBytes = file.Length,
+                    UploadedAt = DateTime.UtcNow
+                });
+            }
+
+            // 7. Lưu vào DB (EF Core sẽ tự động bọc trong Transaction)
             _context.Users.Add(user);
             _context.Businesses.Add(business);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<string>("Đăng ký doanh nghiệp thành công! Vui lòng chờ Admin phê duyệt.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = "Đăng ký doanh nghiệp thành công! Vui lòng chờ Admin phê duyệt." };
         }
     }
 }

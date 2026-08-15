@@ -13,6 +13,7 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public virtual DbSet<Role> Roles { get; set; }
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<Business> Businesses { get; set; }
+    public virtual DbSet<BusinessDocument> BusinessDocuments { get; set; }
     public virtual DbSet<BusinessStaff> BusinessStaff { get; set; }
     public virtual DbSet<HotelStaffAssignment> HotelStaffAssignments { get; set; }
     public virtual DbSet<Hotel> Hotels { get; set; }
@@ -49,6 +50,12 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
             .WithMany(p => p.OwnedBusinesses)
             .HasForeignKey(d => d.OwnerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<BusinessDocument>()
+            .HasOne(d => d.Business)
+            .WithMany(b => b.Documents)
+            .HasForeignKey(d => d.BusinessId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Hotel>()
             .HasOne(d => d.Business)
