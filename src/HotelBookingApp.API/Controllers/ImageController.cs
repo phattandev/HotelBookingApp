@@ -1,5 +1,7 @@
 using System.Security.Claims;
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Features.Manager.Commands;
+using HotelBookingApp.Application.Wrapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +25,7 @@ namespace HotelBookingApp.API.Controllers
             [FromQuery] bool setPrimary = false)
         {
             if (file == null || file.Length == 0)
-                return BadRequest("Vui lòng chọn file ảnh.");
+                return BadRequest(new Response<string>("Vui lòng chọn file ảnh."));
 
             await using var stream = file.OpenReadStream();
             var command = new UploadHotelImageCommand
@@ -34,13 +36,13 @@ namespace HotelBookingApp.API.Controllers
                 SetAsPrimary = setPrimary
             };
 
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         /// <summary>Xóa ảnh khách sạn.</summary>
         [HttpDelete("hotel/{imageId}")]
         public async Task<IActionResult> DeleteHotelImage(Guid imageId)
-            => Ok(await _mediator.Send(new DeleteHotelImageCommand
+            => this.OkOrBadRequest(await _mediator.Send(new DeleteHotelImageCommand
             {
                 ManagerId = GetManagerId(),
                 ImageId = imageId
@@ -54,7 +56,7 @@ namespace HotelBookingApp.API.Controllers
             [FromQuery] bool setPrimary = false)
         {
             if (file == null || file.Length == 0)
-                return BadRequest("Vui lòng chọn file ảnh.");
+                return BadRequest(new Response<string>("Vui lòng chọn file ảnh."));
 
             await using var stream = file.OpenReadStream();
             var command = new UploadRoomTypeImageCommand
@@ -66,13 +68,13 @@ namespace HotelBookingApp.API.Controllers
                 SetAsPrimary = setPrimary
             };
 
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         /// <summary>Xóa ảnh loại phòng.</summary>
         [HttpDelete("roomtype/{imageId}")]
         public async Task<IActionResult> DeleteRoomTypeImage(Guid imageId)
-            => Ok(await _mediator.Send(new DeleteRoomTypeImageCommand
+            => this.OkOrBadRequest(await _mediator.Send(new DeleteRoomTypeImageCommand
             {
                 ManagerId = GetManagerId(),
                 ImageId = imageId

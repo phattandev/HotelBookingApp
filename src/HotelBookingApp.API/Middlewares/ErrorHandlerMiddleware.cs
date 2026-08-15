@@ -43,19 +43,25 @@ namespace HotelBookingApp.Application.Middlewares
 
                     case KeyNotFoundException e:
                         response.StatusCode = (int)HttpStatusCode.NotFound;
+                        responseModel.Message = e.Message;
+                        responseModel.Errors = new[] { e.Message };
                         break;
 
                     case ApiException e:
                         response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        responseModel.Message = e.Message;
+                        responseModel.Errors = new[] { e.Message };
                         break;
 
                     case UnauthorizedAccessException e:
                         response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        responseModel.Message = "Phiên làm việc hết hạn hoặc bạn không có quyền truy cập.";
+                        responseModel.Errors = new[] { e.Message };
                         break;
 
                     default:
                         response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                        responseModel.Message = $"Internal Server Error: {error.Message} | Type: {error.GetType().FullName} | Stack: {error.InnerException?.Message}";
+                        responseModel.Message = "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.";
                         break;
                 }
 

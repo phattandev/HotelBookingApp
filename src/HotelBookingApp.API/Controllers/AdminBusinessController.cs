@@ -1,3 +1,4 @@
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Features.Admin.Commands;
 using HotelBookingApp.Application.Features.Admin.Queries;
 using HotelBookingApp.Application.Features.Hotels.Commands;
@@ -23,12 +24,12 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> GetPendingBusinesses()
         {
             var result = await _mediator.Send(new GetPendingBusinessesQuery());
-            return Ok(result);
+            return this.OkOrBadRequest(result);
         }
 
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
-            => Ok(await _mediator.Send(new GetAdminStatsQuery { FromDate = fromDate, ToDate = toDate }));
+            => this.OkOrBadRequest(await _mediator.Send(new GetAdminStatsQuery { FromDate = fromDate, ToDate = toDate }));
 
         [HttpPut("{id}/review")]
         public async Task<IActionResult> ReviewBusiness(Guid id, [FromBody] ReviewBusinessRequest request)
@@ -39,7 +40,7 @@ namespace HotelBookingApp.API.Controllers
                 Action = request.Action,
                 RejectionReason = request.RejectionReason
             });
-            return Ok(result);
+            return this.OkOrBadRequest(result);
         }
 
         [HttpPut("hotels/{id}/review")]
@@ -51,7 +52,7 @@ namespace HotelBookingApp.API.Controllers
                 Action = request.Action,
                 RejectionReason = request.RejectionReason
             });
-            return Ok(result);
+            return this.OkOrBadRequest(result);
         }
     }
 

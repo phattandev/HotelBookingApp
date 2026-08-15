@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Features.Users.Commands;
 using HotelBookingApp.Application.Features.Users.Queries;
 using MediatR;
@@ -36,7 +37,7 @@ namespace HotelBookingApp.API.Controllers
         {
             var userId = GetCurrentUserId();
             var response = await _mediator.Send(new GetMyProfileQuery(userId));
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
 
         [HttpPut]
@@ -44,7 +45,7 @@ namespace HotelBookingApp.API.Controllers
         {
             command.UserId = GetCurrentUserId(); // Ép UserId lấy từ Token bảo mật, chống giả mạo request
             var response = await _mediator.Send(command);
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
     }
 }

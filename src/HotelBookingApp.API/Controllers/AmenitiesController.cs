@@ -1,4 +1,5 @@
-﻿using HotelBookingApp.Application.Features.Amenities.Commands;
+using HotelBookingApp.API.Extensions;
+using HotelBookingApp.Application.Features.Amenities.Commands;
 using HotelBookingApp.Application.Features.Amenities.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -15,25 +16,25 @@ namespace HotelBookingApp.API.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
-            => Ok(await _mediator.Send(new GetAmenityCategoriesQuery()));
+            => this.OkOrBadRequest(await _mediator.Send(new GetAmenityCategoriesQuery()));
 
         [HttpPost]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> Create([FromBody] CreateAmenityCategoryCommand command)
-            => Ok(await _mediator.Send(command));
+            => this.OkOrBadRequest(await _mediator.Send(command));
 
         [HttpPut("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAmenityCategoryCommand command)
         {
             command.Id = id;
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> Delete(Guid id)
-            => Ok(await _mediator.Send(new DeleteAmenityCategoryCommand { Id = id }));
+            => this.OkOrBadRequest(await _mediator.Send(new DeleteAmenityCategoryCommand { Id = id }));
     }
 
     [ApiController]
@@ -45,24 +46,24 @@ namespace HotelBookingApp.API.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] GetAmenitiesQuery query)
-            => Ok(await _mediator.Send(query));
+            => this.OkOrBadRequest(await _mediator.Send(query));
 
         [HttpPost]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> Create([FromBody] CreateAmenityCommand command)
-            => Ok(await _mediator.Send(command));
+            => this.OkOrBadRequest(await _mediator.Send(command));
 
         [HttpPut("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAmenityCommand command)
         {
             command.Id = id;
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         [HttpPatch("{id}/toggle")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> Toggle(Guid id)
-            => Ok(await _mediator.Send(new ToggleAmenityStatusCommand { Id = id }));
+            => this.OkOrBadRequest(await _mediator.Send(new ToggleAmenityStatusCommand { Id = id }));
     }
 }

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Features.BusinessStaff.Commands;
 using HotelBookingApp.Application.Features.BusinessStaff.Queries;
 using MediatR;
@@ -22,14 +23,14 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> GetEmployees()
         {
             var response = await _mediator.Send(new GetBusinessEmployeesQuery(GetPartnerId()));
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
 
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats([FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
         {
             var query = new GetBusinessStatsQuery { UserId = GetPartnerId(), FromDate = fromDate, ToDate = toDate };
-            return Ok(await _mediator.Send(query));
+            return this.OkOrBadRequest(await _mediator.Send(query));
         }
 
         [HttpPost]
@@ -37,7 +38,7 @@ namespace HotelBookingApp.API.Controllers
         {
             command.PartnerId = GetPartnerId();
             var response = await _mediator.Send(command);
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
 
         [HttpPut("{employeeId}")]
@@ -45,14 +46,14 @@ namespace HotelBookingApp.API.Controllers
         {
             command.PartnerId = GetPartnerId();
             command.EmployeeId = employeeId;
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         [HttpPatch("{employeeId}/toggle-status")]
         public async Task<IActionResult> ToggleStatus(Guid employeeId)
         {
             var response = await _mediator.Send(new ToggleEmployeeStatusCommand { PartnerId = GetPartnerId(), EmployeeId = employeeId });
-            return Ok(response);
+            return this.OkOrBadRequest(response);
         }
     }
 }

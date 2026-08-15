@@ -64,7 +64,7 @@ public class PaymentController : ControllerBase
         }
 
         var vnp_SecureHash = queryDictionary.GetValueOrDefault("vnp_SecureHash");
-        var hashSecret = _configuration["VNPAY:HashSecret"];
+        var hashSecret = _configuration["VNPAY:HashSecret"] ?? string.Empty;
 
         if (string.IsNullOrEmpty(vnp_SecureHash) || !vnpay.ValidateSignature(vnp_SecureHash, hashSecret))
         {

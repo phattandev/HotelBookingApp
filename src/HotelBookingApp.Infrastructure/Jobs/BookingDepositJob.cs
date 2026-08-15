@@ -95,7 +95,7 @@ public class BookingDepositJob
                 booking.GuestName,
                 booking.Id.ToString(),
                 booking.DepositAmount,
-                booking.DepositDeadline.Value);
+                booking.DepositDeadline!.Value);
         }
     }
 }

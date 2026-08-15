@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Features.Manager.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -21,7 +22,7 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateRoomTypeCommand command)
         {
             command.ManagerId = GetManagerId();
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         /// <summary>Cập nhật thông tin và tiện nghi loại phòng.</summary>
@@ -30,13 +31,13 @@ namespace HotelBookingApp.API.Controllers
         {
             command.ManagerId = GetManagerId();
             command.RoomTypeId = roomTypeId;
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         /// <summary>Xóa mềm loại phòng (IsActive = false).</summary>
         [HttpDelete("{roomTypeId}")]
         public async Task<IActionResult> Delete(Guid roomTypeId)
-            => Ok(await _mediator.Send(new DeleteRoomTypeCommand
+            => this.OkOrBadRequest(await _mediator.Send(new DeleteRoomTypeCommand
             {
                 ManagerId = GetManagerId(),
                 RoomTypeId = roomTypeId
@@ -45,7 +46,7 @@ namespace HotelBookingApp.API.Controllers
         /// <summary>Khôi phục loại phòng đã ẩn (IsActive = true).</summary>
         [HttpPut("{roomTypeId}/restore")]
         public async Task<IActionResult> Restore(Guid roomTypeId)
-            => Ok(await _mediator.Send(new RestoreRoomTypeCommand
+            => this.OkOrBadRequest(await _mediator.Send(new RestoreRoomTypeCommand
             {
                 ManagerId = GetManagerId(),
                 RoomTypeId = roomTypeId

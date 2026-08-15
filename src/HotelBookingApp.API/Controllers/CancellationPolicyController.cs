@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Features.Manager.Commands;
 using HotelBookingApp.Application.Features.Manager.Queries;
 using MediatR;
@@ -27,7 +28,7 @@ namespace HotelBookingApp.API.Controllers
         [HttpGet("api/hotels/{hotelId}/policy")]
         [AllowAnonymous]
         public async Task<IActionResult> GetPolicy(Guid hotelId)
-            => Ok(await _mediator.Send(new GetHotelCancellationPolicyQuery { HotelId = hotelId }));
+            => this.OkOrBadRequest(await _mediator.Send(new GetHotelCancellationPolicyQuery { HotelId = hotelId }));
 
         // ── Manager: Cancellation Policy ──────────────────────────────────
 
@@ -35,7 +36,7 @@ namespace HotelBookingApp.API.Controllers
         [HttpGet("api/manager/policy")]
         [Authorize(Roles = "manager")]
         public async Task<IActionResult> GetMyPolicy()
-            => Ok(await _mediator.Send(new GetMyHotelCancellationPolicyQuery
+            => this.OkOrBadRequest(await _mediator.Send(new GetMyHotelCancellationPolicyQuery
             {
                 ManagerId = GetCurrentUserId()
             }));
@@ -52,7 +53,7 @@ namespace HotelBookingApp.API.Controllers
                 HoursBeforeCheckIn = request.HoursBeforeCheckIn,
                 PenaltyPercentage = request.PenaltyPercentage
             });
-            return Ok(result);
+            return this.OkOrBadRequest(result);
         }
 
         /// <summary>Manager cập nhật chính sách hủy phòng hiện có.</summary>
@@ -68,7 +69,7 @@ namespace HotelBookingApp.API.Controllers
                 PenaltyPercentage = request.PenaltyPercentage,
                 IsActive = request.IsActive
             });
-            return Ok(result);
+            return this.OkOrBadRequest(result);
         }
 
         // ── Manager: Deposit Policy ────────────────────────────────────────
@@ -77,7 +78,7 @@ namespace HotelBookingApp.API.Controllers
         [HttpGet("api/manager/deposit-policy")]
         [Authorize(Roles = "manager")]
         public async Task<IActionResult> GetMyDepositPolicy()
-            => Ok(await _mediator.Send(new GetMyDepositPolicyQuery
+            => this.OkOrBadRequest(await _mediator.Send(new GetMyDepositPolicyQuery
             {
                 ManagerId = GetCurrentUserId()
             }));
@@ -93,7 +94,7 @@ namespace HotelBookingApp.API.Controllers
                 HoursBeforeCheckIn = request.HoursBeforeCheckIn,
                 DepositPercentage = request.DepositPercentage
             });
-            return Ok(result);
+            return this.OkOrBadRequest(result);
         }
 
         /// <summary>Manager cập nhật chính sách đặt cọc hiện có.</summary>
@@ -108,7 +109,7 @@ namespace HotelBookingApp.API.Controllers
                 DepositPercentage = request.DepositPercentage,
                 IsActive = request.IsActive
             });
-            return Ok(result);
+            return this.OkOrBadRequest(result);
         }
     }
 

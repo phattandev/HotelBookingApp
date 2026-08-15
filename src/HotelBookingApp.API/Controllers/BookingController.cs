@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using HotelBookingApp.API.Extensions;
 using HotelBookingApp.Application.Features.Bookings.Commands;
 using HotelBookingApp.Application.Features.Bookings.Queries;
+using HotelBookingApp.Application.Wrapper;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,13 +30,13 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateBookingCommand command)
         {
             command.CustomerId = GetCurrentUserId();
-            return Ok(await _mediator.Send(command));
+            return this.OkOrBadRequest(await _mediator.Send(command));
         }
 
         /// <summary>Lấy danh sách đơn của khách hàng đang đăng nhập.</summary>
         [HttpGet("my")]
         public async Task<IActionResult> GetMyBookings([FromQuery] string? status)
-            => Ok(await _mediator.Send(new GetMyBookingsQuery
+            => this.OkOrBadRequest(await _mediator.Send(new GetMyBookingsQuery
             {
                 CustomerId = GetCurrentUserId(),
                 StatusFilter = status
@@ -43,7 +45,7 @@ namespace HotelBookingApp.API.Controllers
         /// <summary>Xem chi tiết 1 đơn đặt phòng (chỉ chủ đơn mới xem được).</summary>
         [HttpGet("{bookingId}")]
         public async Task<IActionResult> GetDetail(Guid bookingId)
-            => Ok(await _mediator.Send(new GetBookingDetailQuery
+            => this.OkOrBadRequest(await _mediator.Send(new GetBookingDetailQuery
             {
                 BookingId = bookingId,
                 CustomerId = GetCurrentUserId()
@@ -52,7 +54,7 @@ namespace HotelBookingApp.API.Controllers
         /// <summary>Khách hàng tự hủy đơn (chỉ khi Pending, cần nhập lý do).</summary>
         [HttpPut("{bookingId}/cancel")]
         public async Task<IActionResult> Cancel(Guid bookingId, [FromBody] CancelBookingRequest request)
-            => Ok(await _mediator.Send(new CancelBookingCommand
+            => this.OkOrBadRequest(await _mediator.Send(new CancelBookingCommand
             {
                 BookingId = bookingId,
                 CustomerId = GetCurrentUserId(),
@@ -62,7 +64,7 @@ namespace HotelBookingApp.API.Controllers
         /// <summary>Giả lập thanh toán cọc (Dev/Test only) — tự động Confirm đơn nếu Pending.</summary>
         [HttpPost("{bookingId}/mock-payment")]
         public async Task<IActionResult> MockPayment(Guid bookingId)
-            => Ok(await _mediator.Send(new MockPaymentCommand
+            => this.OkOrBadRequest(await _mediator.Send(new MockPaymentCommand
             {
                 BookingId = bookingId,
                 CustomerId = GetCurrentUserId()
@@ -92,7 +94,7 @@ namespace HotelBookingApp.API.Controllers
         /// <summary>Lấy danh sách đơn đặt phòng của khách sạn đang quản lý.</summary>
         [HttpGet]
         public async Task<IActionResult> GetHotelBookings([FromQuery] string? status)
-            => Ok(await _mediator.Send(new GetHotelBookingsQuery
+            => this.OkOrBadRequest(await _mediator.Send(new GetHotelBookingsQuery
             {
                 ManagerId = GetManagerId(),
                 StatusFilter = status
@@ -101,7 +103,7 @@ namespace HotelBookingApp.API.Controllers
         /// <summary>Xác nhận hoặc từ chối đơn đặt phòng. Action: "confirm" hoặc "reject".</summary>
         [HttpPut("{bookingId}/status")]
         public async Task<IActionResult> UpdateStatus(Guid bookingId, [FromBody] UpdateStatusRequest request)
-            => Ok(await _mediator.Send(new UpdateBookingStatusCommand
+            => this.OkOrBadRequest(await _mediator.Send(new UpdateBookingStatusCommand
             {
                 BookingId = bookingId,
                 ManagerId = GetManagerId(),
@@ -114,9 +116,9 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> CheckExtensionAvailability(Guid bookingId, [FromBody] ExtendBookingRequest request)
         {
             if (!DateOnly.TryParse(request.NewCheckOutDate, out var date))
-                return BadRequest(new { Message = "Ngày trả phòng mới không hợp lệ. Format yyyy-MM-dd." });
+                return BadRequest(new Response<string>("Ngày trả phòng mới không hợp lệ. Format yyyy-MM-dd."));
 
-            return Ok(await _mediator.Send(new CheckExtensionAvailabilityQuery
+            return this.OkOrBadRequest(await _mediator.Send(new CheckExtensionAvailabilityQuery
             {
                 BookingId = bookingId,
                 ManagerId = GetManagerId(),
@@ -130,9 +132,9 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> ExtendBooking(Guid bookingId, [FromBody] ExtendBookingRequest request)
         {
             if (!DateOnly.TryParse(request.NewCheckOutDate, out var date))
-                return BadRequest(new { Message = "Ngày trả phòng mới không hợp lệ. Format yyyy-MM-dd." });
+                return BadRequest(new Response<string>("Ngày trả phòng mới không hợp lệ. Format là năm-tháng-ngày."));
 
-            return Ok(await _mediator.Send(new ExtendBookingCommand
+            return this.OkOrBadRequest(await _mediator.Send(new ExtendBookingCommand
             {
                 BookingId = bookingId,
                 ManagerId = GetManagerId(),
