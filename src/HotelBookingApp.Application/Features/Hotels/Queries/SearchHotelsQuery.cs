@@ -150,6 +150,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
                     StarRating = h.StarRating,
                     PrimaryImageUrl = primaryImage?.Url,
                     MinPrice = activeRoomTypes.Any() ? activeRoomTypes.Min(rt => rt.BasePrice) : null,
+                    Description = h.Description,
                     RoomTypes = activeRoomTypes.Take(2).Select(rt => new HotelSearchResultRoomTypeDto
                     {
                         Name = rt.Name,
