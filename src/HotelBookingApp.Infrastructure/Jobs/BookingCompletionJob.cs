@@ -31,14 +31,13 @@ public class BookingCompletionJob
         var vnNow = DateTime.UtcNow.AddHours(7);
         var vnToday = DateOnly.FromDateTime(vnNow);
 
-        var confirmedBookings = await _context.Bookings
-            .Include(b => b.Hotel)
-            .Where(b => b.Status == BookingStatus.Confirmed)
-            .ToListAsync();
+        bool isPastNoon = vnNow.Hour >= 12;
 
-        var expiredBookings = confirmedBookings.Where(b => 
-            b.CheckOutDate < vnToday || 
-            (b.CheckOutDate == vnToday && vnNow.Hour >= 12)).ToList();
+        var expiredBookings = await _context.Bookings
+            .Include(b => b.Hotel)
+            .Where(b => b.Status == BookingStatus.Confirmed &&
+                        (b.CheckOutDate < vnToday || (b.CheckOutDate == vnToday && isPastNoon)))
+            .ToListAsync();
 
         if (!expiredBookings.Any())
         {

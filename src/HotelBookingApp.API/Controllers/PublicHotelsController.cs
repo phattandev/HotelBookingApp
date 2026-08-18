@@ -26,6 +26,11 @@ namespace HotelBookingApp.API.Controllers
         public async Task<IActionResult> GetRoomTypeNames()
             => this.OkOrBadRequest(await _mediator.Send(new GetPublicRoomTypeNamesQuery()));
 
+        /// <summary>Gợi ý địa điểm (tỉnh/thành phố và xã/phường) có khách sạn trong hệ thống. Dùng cho autocomplete.</summary>
+        [HttpGet("location-suggestions")]
+        public async Task<IActionResult> GetLocationSuggestions([FromQuery] string? q, [FromQuery] int limit = 8)
+            => this.OkOrBadRequest(await _mediator.Send(new GetLocationSuggestionsQuery { Q = q ?? string.Empty, Limit = limit }));
+
         /// <summary>Lấy chi tiết 1 khách sạn. Truyền checkIn/checkOut để tính phòng còn trống.</summary>
         [HttpGet("{hotelId}/detail")]
         public async Task<IActionResult> GetDetail(

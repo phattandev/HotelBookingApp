@@ -101,7 +101,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
             }
 
             // Gom tất cả các bộ lọc liên quan đến loại phòng thành một điều kiện duy nhất:
-            // KS phải có ít nhất 1 loại phòng thoả mãn TẤT CẢ các tiêu chí (Active, Amenities, Availability, Names)
+            // KS phải có ít nhất 1 loại phòng thoả mãn TẤT CẢ các tiêu chí (Active, Amenities, Availability, Names, Capacity)
             var roomAmenityIds = request.RoomAmenityIds ?? new List<Guid>();
             var hasRoomAmenities = roomAmenityIds.Count > 0;
             
@@ -112,21 +112,38 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
             var checkIn = request.CheckIn ?? default;
             var checkOut = request.CheckOut ?? default;
 
-            if (hasRoomAmenities || hasRoomNames || hasDates || request.NumAdults > 1 || request.NumChildren > 0)
+            // Luôn áp dụng bộ lọc phòng để đảm bảo KS hiển thị thực sự có phòng đáp ứng yêu cầu.
+            // Điều kiện: có tiện nghi, tên phòng, ngày, HOẶC bất kỳ tham số sức chứa nào được truyền.
+            var hasCapacityFilter = request.NumRooms > 1 || request.NumAdults > 1 || request.NumChildren > 0;
+
+            if (hasRoomAmenities || hasRoomNames || hasDates || hasCapacityFilter)
             {
-                query = query.Where(h => h.RoomTypes.Any(rt => 
+                var numRooms = request.NumRooms > 0 ? request.NumRooms : 1;
+                var adultsPerRoom = (int)Math.Ceiling((double)request.NumAdults / numRooms);
+                var childrenPerRoom = (int)Math.Ceiling((double)request.NumChildren / numRooms);
+
+                query = query.Where(h => h.RoomTypes.Any(rt =>
                     rt.IsActive &&
                     (!hasRoomNames || lowerNames.Contains(rt.Name.ToLower())) &&
                     (!hasRoomAmenities || roomAmenityIds.All(aid => rt.RoomTypeAmenities.Any(rta => rta.AmenityId == aid))) &&
-                    (rt.MaxAdults >= Math.Ceiling((double)request.NumAdults / request.NumRooms)) &&
-                    (rt.MaxChildren >= Math.Ceiling((double)request.NumChildren / request.NumRooms)) &&
-                    (!hasDates || (rt.TotalRooms - _context.BookingItems
-                            .Where(bi => bi.RoomTypeId == rt.Id &&
-                                (bi.Booking.Status == Domain.Models.BookingStatus.Pending || bi.Booking.Status == Domain.Models.BookingStatus.Approved || bi.Booking.Status == Domain.Models.BookingStatus.Confirmed) &&
-                                bi.Booking.CheckInDate < checkOut && bi.Booking.CheckOutDate > checkIn)
-                            .Sum(bi => (int?)bi.NumRooms) ?? 0) >= request.NumRooms)
+                    rt.MaxAdults >= adultsPerRoom &&
+                    rt.MaxChildren >= childrenPerRoom &&
+                    // Khi có ngày: lọc theo phòng trống thực tế >= NumRooms
+                    // Khi không có ngày: lọc theo tổng số phòng của loại này >= NumRooms
+                    (hasDates
+                        ? (rt.TotalRooms - (_context.BookingItems
+                                .Where(bi =>
+                                    bi.RoomTypeId == rt.Id &&
+                                    (bi.Booking.Status == Domain.Models.BookingStatus.Pending ||
+                                     bi.Booking.Status == Domain.Models.BookingStatus.Approved ||
+                                     bi.Booking.Status == Domain.Models.BookingStatus.Confirmed) &&
+                                    bi.Booking.CheckInDate < checkOut &&
+                                    bi.Booking.CheckOutDate > checkIn)
+                                .Sum(bi => (int?)bi.NumRooms) ?? 0)) >= numRooms
+                        : rt.TotalRooms >= numRooms)
                 ));
             }
+
 
             var totalCount = await query.CountAsync(cancellationToken);
             var hotels = await query.OrderBy(h => h.Name)
@@ -150,6 +167,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Queries
                     StarRating = h.StarRating,
                     PrimaryImageUrl = primaryImage?.Url,
                     MinPrice = activeRoomTypes.Any() ? activeRoomTypes.Min(rt => rt.BasePrice) : null,
+                    Description = h.Description,
                     RoomTypes = activeRoomTypes.Take(2).Select(rt => new HotelSearchResultRoomTypeDto
                     {
                         Name = rt.Name,
