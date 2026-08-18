@@ -35,6 +35,7 @@ public class BookingCompletionJob
 
         var expiredBookings = await _context.Bookings
             .Include(b => b.Hotel)
+            .Include(b => b.Items).ThenInclude(i => i.RoomType)
             .Where(b => b.Status == BookingStatus.Confirmed &&
                         (b.CheckOutDate < vnToday || (b.CheckOutDate == vnToday && isPastNoon)))
             .ToListAsync();
@@ -58,13 +59,7 @@ public class BookingCompletionJob
         {
             try
             {
-                var hotelName = booking.Hotel?.Name ?? "Khách sạn";
-                await _emailService.SendPostCheckoutThankYouAsync(
-                    booking.GuestEmail,
-                    booking.GuestName,
-                    booking.Id.ToString(),
-                    hotelName,
-                    booking.CheckOutDate);
+                await _emailService.SendPostCheckoutThankYouAsync(booking);
             }
             catch (Exception ex)
             {
