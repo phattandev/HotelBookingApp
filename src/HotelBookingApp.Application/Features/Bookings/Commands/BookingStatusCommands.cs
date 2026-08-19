@@ -240,7 +240,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                 
                 await _emailService.SendBookingApprovedAsync(booking);
 
-                return new Response<string>("Đã duyệt đơn đặt phòng. Hệ thống đã gửi yêu cầu đặt cọc cho khách hàng.");
+                return new Response<string> { Succeeded = true, Data = "Success", Message = "Đã duyệt đơn đặt phòng. Hệ thống đã gửi yêu cầu đặt cọc cho khách hàng." };
             }
             else if (request.Action == "confirm")
             {
@@ -249,7 +249,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                 booking.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
                 await _emailService.SendBookingConfirmedAsync(booking);
-                return new Response<string>("Đã xác nhận đơn đặt phòng.");
+                return new Response<string> { Succeeded = true, Data = "Success", Message = "Đã xác nhận đơn đặt phòng." };
             }
             else if (request.Action == "reject")
             {
@@ -262,7 +262,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                 booking.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
                 await _emailService.SendBookingCancelledAsync(booking);
-                return new Response<string>("Đã từ chối đơn đặt phòng.");
+                return new Response<string> { Succeeded = true, Data = "Success", Message = "Đã từ chối đơn đặt phòng." };
             }
 
             throw new ApiException("Hành động không hợp lệ. Chỉ chấp nhận 'approve', 'confirm' hoặc 'reject'.");
@@ -329,7 +329,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
             await _emailService.SendDepositConfirmedAsync(booking);
 
-            return new Response<string>("Đã xác nhận thanh toán cọ thành công! Đơn đặt phòng của bạn đã được xác nhận.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = "Đã xác nhận thanh toán cọ thành công! Đơn đặt phòng của bạn đã được xác nhận." };
         }
     }
 }

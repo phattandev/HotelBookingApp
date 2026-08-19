@@ -1,4 +1,4 @@
-﻿using HotelBookingApp.Application.Common.Exceptions;
+using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.Wrapper;
 using MediatR;
@@ -68,7 +68,7 @@ namespace HotelBookingApp.Application.Features.Users.Commands
             }
 
             await _context.SaveChangesAsync(cancellationToken);
-            return new Response<string>("Cập nhật thông tin hồ sơ thành công.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = "Cập nhật thông tin hồ sơ thành công." };
         }
     }
 }

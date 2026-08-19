@@ -49,7 +49,7 @@ namespace HotelBookingApp.Application.Features.StaffAssignment.Commands
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<string>($"Đã hủy phân công của '{employee.FullName}'. Tài khoản trở về trạng thái 'Chưa phân công'.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã hủy phân công của '{employee.FullName}'. Tài khoản trở về trạng thái 'Chưa phân công'." };
         }
     }
 }

@@ -33,7 +33,7 @@ namespace HotelBookingApp.Application.Features.Manager.Commands
             hotel.StarRating = request.StarRating;
 
             await _context.SaveChangesAsync(cancellationToken);
-            return new Response<string>("Cập nhật thông tin khách sạn thành công.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = "Cập nhật thông tin khách sạn thành công." };
         }
     }
 

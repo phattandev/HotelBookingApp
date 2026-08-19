@@ -36,7 +36,7 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
             await _context.SaveChangesAsync(cancellationToken);
 
             string statusText = staff.User.IsActive ? "kích hoạt" : "vô hiệu hóa";
-            return new Response<string>($"Đã {statusText} tài khoản nhân viên.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã {statusText} tài khoản nhân viên." };
         }
     }
 }

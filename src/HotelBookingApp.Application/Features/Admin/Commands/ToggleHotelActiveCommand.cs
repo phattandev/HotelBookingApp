@@ -31,7 +31,7 @@ namespace HotelBookingApp.Application.Features.Admin.Commands
             await _context.SaveChangesAsync(cancellationToken);
 
             var status = hotel.IsActive ? "kích hoạt" : "đình chỉ";
-            return new Response<string>($"Đã {status} khách sạn '{hotel.Name}' thành công.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã {status} khách sạn '{hotel.Name}' thành công." };
         }
     }
 }

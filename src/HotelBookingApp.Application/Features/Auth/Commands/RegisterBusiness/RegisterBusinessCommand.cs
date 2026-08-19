@@ -28,7 +28,7 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
         public string ConfirmPassword { get; set; } = null!;
 
         // Tài liệu pháp lý
-        public List<IFormFile> Documents { get; set; } = new();
+        public List<IFormFile>? Documents { get; set; } = new();
     }
 
     public class RegisterBusinessCommandHandler : IRequestHandler<RegisterBusinessCommand, Response<string>>
@@ -84,18 +84,19 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
             const int maxFileCount = 10;
             const long maxFileSizeBytes = 10 * 1024 * 1024; // 10MB
 
-            if (request.Documents == null || request.Documents.Count == 0)
-                throw new ApiException("Vui lòng upload ít nhất 1 tài liệu pháp lý (PDF).");
-            if (request.Documents.Count > maxFileCount)
-                throw new ApiException($"Tối đa {maxFileCount} file được phép upload.");
-
-            foreach (var file in request.Documents)
+            if (request.Documents != null && request.Documents.Count > 0)
             {
-                if (file.Length > maxFileSizeBytes)
-                    throw new ApiException($"File '{file.FileName}' vượt quá giới hạn 10MB.");
-                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (ext != ".pdf")
-                    throw new ApiException($"File '{file.FileName}' không hợp lệ. Chỉ chấp nhận file PDF.");
+                if (request.Documents.Count > maxFileCount)
+                    throw new ApiException($"Tối đa {maxFileCount} file được phép upload.");
+
+                foreach (var file in request.Documents)
+                {
+                    if (file.Length > maxFileSizeBytes)
+                        throw new ApiException($"File '{file.FileName}' vượt quá giới hạn 10MB.");
+                    var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                    if (ext != ".pdf")
+                        throw new ApiException($"File '{file.FileName}' không hợp lệ. Chỉ chấp nhận file PDF.");
+                }
             }
 
             // 5. Khởi tạo Business (Hồ sơ doanh nghiệp)
@@ -112,22 +113,25 @@ namespace HotelBookingApp.Application.Features.Auth.Commands.RegisterBusiness
             };
 
             // 6. Upload file và tạo BusinessDocument records
-            var folder = $"business-documents/{business.Id}";
-            foreach (var file in request.Documents)
+            if (request.Documents != null && request.Documents.Count > 0)
             {
-                await using var stream = file.OpenReadStream();
-                var uploadResult = await _cloudinaryService.UploadRawFileAsync(stream, file.FileName, folder);
-                
-                _context.BusinessDocuments.Add(new BusinessDocument
+                var folder = $"business-documents/{business.Id}";
+                foreach (var file in request.Documents)
                 {
-                    Id = Guid.NewGuid(),
-                    BusinessId = business.Id,
-                    FileName = file.FileName,
-                    FileUrl = uploadResult.Url,
-                    PublicId = uploadResult.PublicId,
-                    FileSizeBytes = file.Length,
-                    UploadedAt = DateTime.UtcNow
-                });
+                    await using var stream = file.OpenReadStream();
+                    var uploadResult = await _cloudinaryService.UploadRawFileAsync(stream, file.FileName, folder);
+                    
+                    _context.BusinessDocuments.Add(new BusinessDocument
+                    {
+                        Id = Guid.NewGuid(),
+                        BusinessId = business.Id,
+                        FileName = file.FileName,
+                        FileUrl = uploadResult.Url,
+                        PublicId = uploadResult.PublicId,
+                        FileSizeBytes = file.Length,
+                        UploadedAt = DateTime.UtcNow
+                    });
+                }
             }
 
             // 7. Lưu vào DB (EF Core sẽ tự động bọc trong Transaction)

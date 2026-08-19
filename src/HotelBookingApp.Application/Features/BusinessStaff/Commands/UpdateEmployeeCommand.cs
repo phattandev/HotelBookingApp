@@ -61,7 +61,7 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<string>($"Đã cập nhật thông tin nhân viên '{user.FullName}' thành công.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã cập nhật thông tin nhân viên '{user.FullName}' thành công." };
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using HotelBookingApp.Application.Common.Exceptions;
+using HotelBookingApp.Application.Common.Exceptions;
 using HotelBookingApp.Application.Common.Interfaces;
 using HotelBookingApp.Application.Wrapper;
 using MediatR;
@@ -26,7 +26,7 @@ namespace HotelBookingApp.Application.Features.Amenities.Commands
             await _context.SaveChangesAsync(cancellationToken);
 
             var status = amenity.IsActive == true ? "kích hoạt" : "vô hiệu hóa";
-            return new Response<string>($"Đã {status} tiện nghi '{amenity.Name}'!");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã {status} tiện nghi '{amenity.Name}'!" };
         }
     }
 }
