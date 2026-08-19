@@ -49,7 +49,7 @@ namespace HotelBookingApp.Application.Features.Manager.Commands
             await _context.HotelAmenities.AddRangeAsync(toAdd, cancellationToken);
 
             await _context.SaveChangesAsync(cancellationToken);
-            return new Response<string>($"Đã cập nhật {desiredIds.Count} tiện nghi cho khách sạn.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã cập nhật {desiredIds.Count} tiện nghi cho khách sạn." };
         }
     }
 }

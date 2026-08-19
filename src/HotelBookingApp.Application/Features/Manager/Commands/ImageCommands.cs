@@ -120,7 +120,7 @@ namespace HotelBookingApp.Application.Features.Manager.Commands
 
             _context.HotelImages.Remove(image);
             await _context.SaveChangesAsync(cancellationToken);
-            return new Response<string>("Đã xóa ảnh thành công.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = "Đã xóa ảnh thành công." };
         }
     }
 
@@ -233,7 +233,7 @@ namespace HotelBookingApp.Application.Features.Manager.Commands
 
             _context.RoomTypeImages.Remove(image);
             await _context.SaveChangesAsync(cancellationToken);
-            return new Response<string>("Đã xóa ảnh thành công.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = "Đã xóa ảnh thành công." };
         }
     }
 }

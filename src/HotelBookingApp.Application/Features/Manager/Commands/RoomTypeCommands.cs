@@ -126,7 +126,7 @@ namespace HotelBookingApp.Application.Features.Manager.Commands
             await _context.RoomTypeAmenities.AddRangeAsync(newAmenities, cancellationToken);
 
             await _context.SaveChangesAsync(cancellationToken);
-            return new Response<string>($"Đã cập nhật loại phòng '{roomType.Name}' thành công.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã cập nhật loại phòng '{roomType.Name}' thành công." };
         }
     }
 
@@ -166,7 +166,7 @@ namespace HotelBookingApp.Application.Features.Manager.Commands
 
             roomType.IsActive = false; // Soft delete
             await _context.SaveChangesAsync(cancellationToken);
-            return new Response<string>($"Đã xóa loại phòng '{roomType.Name}'.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã xóa loại phòng '{roomType.Name}'." };
         }
     }
 
@@ -194,7 +194,7 @@ namespace HotelBookingApp.Application.Features.Manager.Commands
 
             roomType.IsActive = true; // Restore
             await _context.SaveChangesAsync(cancellationToken);
-            return new Response<string>($"Đã mở lại loại phòng '{roomType.Name}'.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã mở lại loại phòng '{roomType.Name}'." };
         }
     }
 }

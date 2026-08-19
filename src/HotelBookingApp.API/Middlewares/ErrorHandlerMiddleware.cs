@@ -65,7 +65,8 @@ namespace HotelBookingApp.Application.Middlewares
                         break;
                 }
 
-                string result = JsonSerializer.Serialize(responseModel);
+                var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                string result = JsonSerializer.Serialize(responseModel, options);
                 await response.WriteAsync(result);
             }
         }

@@ -58,7 +58,7 @@ namespace HotelBookingApp.Application.Features.Hotels.Commands
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<string>("Đã gửi đơn đăng ký khách sạn thành công. Vui lòng chờ Admin phê duyệt.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = "Đã gửi đơn đăng ký khách sạn thành công. Vui lòng chờ Admin phê duyệt." };
         }
     }
 }

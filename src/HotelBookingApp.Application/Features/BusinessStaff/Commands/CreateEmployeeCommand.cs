@@ -73,7 +73,7 @@ namespace HotelBookingApp.Application.Features.BusinessStaff.Commands
             _context.BusinessStaff.Add(businessStaff);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response<string>($"Đã thêm nhân viên '{request.FullName}' thành công. Vui lòng phân công tại mục Phân Công.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã thêm nhân viên '{request.FullName}' thành công. Vui lòng phân công tại mục Phân Công." };
         }
     }
 }

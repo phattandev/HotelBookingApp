@@ -101,8 +101,7 @@ namespace HotelBookingApp.Application.Features.StaffAssignment.Commands
             await _context.SaveChangesAsync(cancellationToken);
 
             var roleLabel = roleNormalized == "manager" ? "Quản lý" : "Nhân viên";
-            return new Response<string>(
-                $"Đã phân công '{employee.FullName}' làm {roleLabel} tại '{hotel.Name}'.");
+            return new Response<string> { Succeeded = true, Data = "Success", Message = $"Đã phân công '{employee.FullName}' làm {roleLabel} tại '{hotel.Name}'." };
         }
     }
 

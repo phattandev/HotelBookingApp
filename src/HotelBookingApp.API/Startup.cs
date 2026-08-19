@@ -41,7 +41,11 @@ namespace HotelBookingApp.API
 
             services.AddApplicationServices();
 
-            services.AddControllers();
+            services.AddControllers()
+                    .ConfigureApiBehaviorOptions(options =>
+                    {
+                        options.SuppressModelStateInvalidFilter = true;
+                    });
 
 
             services.AddEndpointsApiExplorer();
