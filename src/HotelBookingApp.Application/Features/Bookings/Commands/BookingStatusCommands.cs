@@ -44,6 +44,8 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
         public async Task<Response<CancelBookingResultDto>> Handle(CancelBookingCommand request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
+                .Include(b => b.Hotel)
+                .Include(b => b.Items).ThenInclude(i => i.RoomType)
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -100,12 +102,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                     booking.PaymentStatus = PaymentStatus.Refunded;
                     booking.RefundAmount = refundDepositAmount;
                     
-                    // Gửi email thông báo hoàn cọc
-                    await _emailService.SendDepositRefundedAsync(
-                        booking.GuestEmail,
-                        booking.GuestName,
-                        booking.Id.ToString(),
-                        refundDepositAmount);
+                    await _emailService.SendDepositRefundedAsync(booking);
                 }
                 else
                 {
@@ -119,12 +116,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                 booking.RefundAmount = 0;
             }
 
-            // Gửi email thông báo hủy
-            await _emailService.SendBookingCancelledAsync(
-                booking.GuestEmail,
-                booking.GuestName,
-                booking.Id.ToString(),
-                request.CancelReason);
+            await _emailService.SendBookingCancelledAsync(booking);
 
             await _context.SaveChangesAsync(cancellationToken);
 
@@ -199,6 +191,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
             // Tìm đơn đặt phòng thuộc khách sạn Manager đang quản lý
             var booking = await _context.Bookings
+                .Include(b => b.Hotel)
                 .Include(b => b.Items)
                     .ThenInclude(i => i.RoomType)
                 .FirstOrDefaultAsync(b =>
@@ -245,13 +238,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
                 await _context.SaveChangesAsync(cancellationToken);
                 
-                // Gửi mail thông báo duyệt và yêu cầu cọc
-                await _emailService.SendBookingApprovedAsync(
-                    booking.GuestEmail, 
-                    booking.GuestName, 
-                    booking.Id.ToString(), 
-                    booking.DepositAmount, 
-                    booking.DepositDeadline.Value);
+                await _emailService.SendBookingApprovedAsync(booking);
 
                 return new Response<string>("Đã duyệt đơn đặt phòng. Hệ thống đã gửi yêu cầu đặt cọc cho khách hàng.");
             }
@@ -261,7 +248,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                 booking.Status = BookingStatus.Confirmed;
                 booking.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
-                await _emailService.SendBookingConfirmedAsync(booking.GuestEmail, booking.GuestName, booking.Id.ToString());
+                await _emailService.SendBookingConfirmedAsync(booking);
                 return new Response<string>("Đã xác nhận đơn đặt phòng.");
             }
             else if (request.Action == "reject")
@@ -274,7 +261,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
                 booking.CancelledAt = DateTime.UtcNow;
                 booking.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync(cancellationToken);
-                await _emailService.SendBookingCancelledAsync(booking.GuestEmail, booking.GuestName, booking.Id.ToString(), request.CancelReason);
+                await _emailService.SendBookingCancelledAsync(booking);
                 return new Response<string>("Đã từ chối đơn đặt phòng.");
             }
 
@@ -309,6 +296,8 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
         public async Task<Response<string>> Handle(MockPaymentCommand request, CancellationToken cancellationToken)
         {
             var booking = await _context.Bookings
+                .Include(b => b.Hotel)
+                .Include(b => b.Items).ThenInclude(i => i.RoomType)
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -338,12 +327,7 @@ namespace HotelBookingApp.Application.Features.Bookings.Commands
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Gửi email xác nhận đã nhận cọ
-            await _emailService.SendDepositConfirmedAsync(
-                booking.GuestEmail,
-                booking.GuestName,
-                booking.Id.ToString(),
-                booking.DepositAmount);
+            await _emailService.SendDepositConfirmedAsync(booking);
 
             return new Response<string>("Đã xác nhận thanh toán cọ thành công! Đơn đặt phòng của bạn đã được xác nhận.");
         }

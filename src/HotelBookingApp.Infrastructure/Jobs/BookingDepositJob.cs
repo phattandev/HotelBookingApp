@@ -33,6 +33,8 @@ public class BookingDepositJob
 
         var overdueBookings = await _context.Bookings
             .Include(b => b.Customer)
+            .Include(b => b.Hotel)
+            .Include(b => b.Items).ThenInclude(i => i.RoomType)
             .Where(b =>
                 b.PaymentStatus == PaymentStatus.Unpaid &&
                 b.DepositDeadline != null &&
@@ -53,16 +55,23 @@ public class BookingDepositJob
             booking.CancelReason = "Tự động hủy: Quá hạn thanh toán đặt cọc.";
             booking.CancelledAt = now;
             booking.UpdatedAt = now;
-
-            // Gửi email thông báo hủy
-            await _emailService.SendBookingCancelledAsync(
-                booking.GuestEmail,
-                booking.GuestName,
-                booking.Id.ToString(),
-                "Quá hạn thanh toán đặt cọc");
         }
 
+        // 1. LƯU DATABASE TRƯỚC: Đảm bảo giao dịch an toàn
         await _context.SaveChangesAsync(CancellationToken.None);
+
+        // 2. GỬI EMAIL SAU: Bọc try-catch để nếu 1 email lỗi không làm chết cả job
+        foreach (var booking in overdueBookings)
+        {
+            try
+            {
+                await _emailService.SendBookingCancelledAsync(booking);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[BookingDepositJob] Lỗi gửi email hủy cho booking {Id}", booking.Id);
+            }
+        }
 
         _logger.LogInformation("[BookingDepositJob] Đã tự động hủy {Count} đơn do không thanh toán cọc.", overdueBookings.Count);
     }
@@ -78,6 +87,8 @@ public class BookingDepositJob
         // Các đơn đã Approved, chưa cọc, chưa hủy, còn trong hạn
         var pendingDeposits = await _context.Bookings
             .Include(b => b.Customer)
+            .Include(b => b.Hotel)
+            .Include(b => b.Items).ThenInclude(i => i.RoomType)
             .Where(b =>
                 b.PaymentStatus == PaymentStatus.Unpaid &&
                 b.Status == BookingStatus.Approved &&
@@ -90,12 +101,14 @@ public class BookingDepositJob
 
         foreach (var booking in pendingDeposits)
         {
-            await _emailService.SendDepositReminderAsync(
-                booking.GuestEmail,
-                booking.GuestName,
-                booking.Id.ToString(),
-                booking.DepositAmount,
-                booking.DepositDeadline!.Value);
+            try
+            {
+                await _emailService.SendDepositReminderAsync(booking);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[BookingDepositJob] Lỗi gửi email nhắc cọc cho booking {Id}", booking.Id);
+            }
         }
     }
 }

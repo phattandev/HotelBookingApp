@@ -1,6 +1,8 @@
+using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using HotelBookingApp.Application.Common.Interfaces;
+using HotelBookingApp.Domain.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -59,136 +61,161 @@ public class EmailService : IEmailService
         }
     }
 
-    public Task SendBookingApprovedAsync(string toEmail, string guestName, string bookingId, decimal depositAmount, DateTime deadline)
+    private string GetBaseEmailTemplate(string title, string content, string ctaText, string ctaLink, string colorHex)
     {
-        string subject = $"[BookNow] Đơn đặt phòng #{bookingId[..8]} đã được duyệt - Yêu cầu đặt cọc";
-        string vnTime = deadline.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
-        string html = $@"
-            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
-                <h2 style='color: #4CAF50; text-align: center;'>Đơn Đặt Phòng Đã Được Duyệt!</h2>
-                <p>Xin chào <b>{guestName}</b>,</p>
-                <p>Khách sạn đã duyệt yêu cầu đặt phòng của bạn (Mã: <b>{bookingId}</b>).</p>
-                <p>Để hoàn tất quá trình giữ chỗ, vui lòng thanh toán khoản tiền cọc <b>{depositAmount:N0} VNĐ</b>.</p>
-                <p style='color: #d9534f; font-weight: bold;'>Hạn chót thanh toán: {vnTime}</p>
-                <p><i>Lưu ý: Nếu quá hạn mà chưa nhận được thanh toán, hệ thống sẽ tự động hủy đơn đặt phòng của bạn.</i></p>
-                <a href='http://localhost:5173/booking/{bookingId}' style='display:inline-block;background:#0ea5e9;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;margin-top:8px'>Thanh toán ngay →</a>
-                <br>
-                <p>Cảm ơn bạn đã tin tưởng BookNow!</p>
-                <p style='color: #888; font-size: 12px; text-align: center; margin-top: 20px;'>BookNow Team</p>
+        return $@"
+<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; background-color: #f4f4f5; padding: 40px 20px;'>
+    <div style='background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);'>
+        <!-- Header -->
+        <div style='background-color: {colorHex}; padding: 30px; text-align: center; color: white;'>
+            <h1 style='margin: 0; font-size: 24px;'>{title}</h1>
+        </div>
+        
+        <!-- Body -->
+        <div style='padding: 30px; color: #3f3f46; font-size: 16px; line-height: 1.6;'>
+            {content}
+            
+            <!-- Call to Action -->
+            <div style='text-align: center; margin-top: 30px;'>
+                <a href='{ctaLink}' style='display: inline-block; background-color: {colorHex}; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;'>{ctaText}</a>
             </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style='background-color: #f8fafc; padding: 20px; text-align: center; font-size: 14px; color: #94a3b8; border-top: 1px solid #e2e8f0;'>
+            <p style='margin: 0;'>Email này được gửi tự động từ hệ thống HotelBooking.</p>
+            <p style='margin: 4px 0 0;'>Vui lòng không trả lời email này.</p>
+        </div>
+    </div>
+</div>";
+    }
+
+    private string GetBookingDetailsHtml(Booking b)
+    {
+        var roomNames = b.Items != null && b.Items.Any() ? string.Join(", ", b.Items.Select(i => $"{i.NumRooms}x {i.RoomType?.Name}")) : "N/A";
+        return $@"
+        <div style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;'>
+            <h3 style='margin-top: 0; color: #1e293b; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;'>Chi tiết đơn đặt phòng #{b.Id.ToString()[..8].ToUpper()}</h3>
+            <table style='width: 100%; font-size: 14px;'>
+                <tr><td style='padding: 6px 0; color: #64748b;'>Khách sạn:</td><td style='padding: 6px 0; font-weight: 500; text-align: right;'>{b.Hotel?.Name}</td></tr>
+                <tr><td style='padding: 6px 0; color: #64748b;'>Khách hàng:</td><td style='padding: 6px 0; font-weight: 500; text-align: right;'>{b.GuestName}</td></tr>
+                <tr><td style='padding: 6px 0; color: #64748b;'>Nhận phòng:</td><td style='padding: 6px 0; font-weight: 500; text-align: right;'>{b.CheckInDate:dd/MM/yyyy}</td></tr>
+                <tr><td style='padding: 6px 0; color: #64748b;'>Trả phòng:</td><td style='padding: 6px 0; font-weight: 500; text-align: right;'>{b.CheckOutDate:dd/MM/yyyy}</td></tr>
+                <tr><td style='padding: 6px 0; color: #64748b;'>Số khách:</td><td style='padding: 6px 0; font-weight: 500; text-align: right;'>{b.NumAdults} Người lớn{(b.NumChildren > 0 ? $", {b.NumChildren} Trẻ em" : "")}</td></tr>
+                <tr><td style='padding: 6px 0; color: #64748b;'>Phòng:</td><td style='padding: 6px 0; font-weight: 500; text-align: right;'>{roomNames}</td></tr>
+                <tr><td style='padding: 6px 0; color: #64748b; border-top: 1px dashed #cbd5e1;'>Tổng tiền:</td><td style='padding: 6px 0; font-weight: bold; color: #0f172a; border-top: 1px dashed #cbd5e1; text-align: right;'>{b.TotalPrice:N0} VNĐ</td></tr>
+            </table>
+        </div>";
+    }
+
+    public Task SendBookingApprovedAsync(Booking booking)
+    {
+        string subject = $"[BookNow] Đơn #{booking.Id.ToString()[..8].ToUpper()} đã duyệt - Yêu cầu cọc";
+        string vnTime = booking.DepositDeadline?.AddHours(7).ToString("dd/MM/yyyy HH:mm") ?? "";
+        string content = $@"
+            <p>Xin chào <strong>{booking.GuestName}</strong>,</p>
+            <p>Khách sạn <strong>{booking.Hotel?.Name}</strong> đã duyệt yêu cầu đặt phòng của bạn.</p>
+            {GetBookingDetailsHtml(booking)}
+            <div style='background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 15px; margin: 20px 0;'>
+                <p style='margin: 0;'>Số tiền cần cọc: <strong style='color: #0ea5e9; font-size: 18px;'>{booking.DepositAmount:N0} VNĐ</strong></p>
+                <p style='margin: 8px 0 0; color: #dc2626;'>Hạn chót thanh toán: <strong>{vnTime}</strong> (giờ VN)</p>
+            </div>
+            <p>Vui lòng thanh toán cọc để giữ phòng. Nếu quá hạn, đơn sẽ tự động bị hủy.</p>
         ";
-        return SendAsync(toEmail, subject, html);
+        string html = GetBaseEmailTemplate("Đơn Đã Được Duyệt!", content, "Thanh toán ngay", $"http://localhost:5173/my-bookings", "#0ea5e9");
+        return SendAsync(booking.GuestEmail, subject, html);
     }
 
-    public Task SendDepositReminderAsync(string toEmail, string guestName, string bookingId, decimal depositAmount, DateTime deadline)
+    public Task SendDepositReminderAsync(Booking booking)
     {
-        var paymentLink = $"http://localhost:5173/booking/{bookingId}";
-        var subject = "⏰ Nhắc nhở: Thanh toán đặt cọc để giữ phòng của bạn";
-        var html = $@"
-<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto'>
-  <div style='background:#0ea5e9;color:white;padding:24px;border-radius:8px 8px 0 0'>
-    <h2 style='margin:0'>Nhắc nhở Thanh toán Cọc</h2>
-  </div>
-  <div style='padding:24px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0 0 8px 8px'>
-    <p>Xin chào <strong>{guestName}</strong>,</p>
-    <p>Đơn đặt phòng <strong>#{bookingId[..8].ToUpper()}</strong> của bạn <strong>chưa được thanh toán cọc</strong>.</p>
-    <div style='background:white;border:1px solid #fbbf24;border-radius:8px;padding:16px;margin:16px 0'>
-      <p style='margin:0'>💰 Số tiền cọc: <strong style='color:#0ea5e9;font-size:18px'>{depositAmount:N0} VNĐ</strong></p>
-      <p style='margin:8px 0 0'>⏰ Hạn thanh toán: <strong style='color:#ef4444'>{deadline.AddHours(7):dd/MM/yyyy HH:mm} (giờ VN)</strong></p>
-    </div>
-    <p>Vui lòng đăng nhập vào hệ thống và thanh toán cọc để giữ phòng. Nếu quá hạn, đơn sẽ tự động bị hủy.</p>
-    <a href='{paymentLink}' style='display:inline-block;background:#0ea5e9;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;margin-top:8px'>Thanh toán ngay →</a>
-    <p style='color:#94a3b8;font-size:12px;margin-top:24px'>Email này được gửi tự động từ hệ thống HotelBooking.</p>
-  </div>
-</div>";
-        return SendAsync(toEmail, subject, html);
+        string subject = $"⏰ Nhắc nhở cọc đơn #{booking.Id.ToString()[..8].ToUpper()}";
+        string vnTime = booking.DepositDeadline?.AddHours(7).ToString("dd/MM/yyyy HH:mm") ?? "";
+        string content = $@"
+            <p>Xin chào <strong>{booking.GuestName}</strong>,</p>
+            <p>Đơn đặt phòng của bạn tại <strong>{booking.Hotel?.Name}</strong> sắp hết hạn đặt cọc.</p>
+            {GetBookingDetailsHtml(booking)}
+            <div style='background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;'>
+                <p style='margin: 0;'>Số tiền cần cọc: <strong style='color: #f59e0b; font-size: 18px;'>{booking.DepositAmount:N0} VNĐ</strong></p>
+                <p style='margin: 8px 0 0; color: #dc2626;'>Hạn chót: <strong>{vnTime}</strong> (giờ VN)</p>
+            </div>
+            <p>Xin lưu ý, hệ thống sẽ tự động hủy đơn sau thời gian trên nếu chưa nhận được thanh toán.</p>
+        ";
+        string html = GetBaseEmailTemplate("Nhắc Nhở Thanh Toán", content, "Thanh toán ngay", $"http://localhost:5173/my-bookings", "#f59e0b");
+        return SendAsync(booking.GuestEmail, subject, html);
     }
 
-    public Task SendBookingConfirmedAsync(string toEmail, string guestName, string bookingId)
+    public Task SendBookingConfirmedAsync(Booking booking)
     {
-        var subject = "✅ Đặt phòng đã được xác nhận!";
-        var html = $@"
-<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto'>
-  <div style='background:#22c55e;color:white;padding:24px;border-radius:8px 8px 0 0'>
-    <h2 style='margin:0'>✅ Đặt phòng Đã xác nhận</h2>
-  </div>
-  <div style='padding:24px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0 0 8px 8px'>
-    <p>Xin chào <strong>{guestName}</strong>,</p>
-    <p>Đơn đặt phòng <strong>#{bookingId[..8].ToUpper()}</strong> đã được khách sạn <strong>xác nhận</strong>.</p>
-    <p>Hẹn gặp bạn tại khách sạn. Chúc bạn có một chuyến đi tuyệt vời! 🏨</p>
-    <p style='color:#94a3b8;font-size:12px;margin-top:24px'>Email này được gửi tự động từ hệ thống HotelBooking.</p>
-  </div>
-</div>";
-        return SendAsync(toEmail, subject, html);
+        string subject = $"✅ Xác nhận đặt phòng #{booking.Id.ToString()[..8].ToUpper()}";
+        string content = $@"
+            <p>Xin chào <strong>{booking.GuestName}</strong>,</p>
+            <p>Đơn đặt phòng của bạn đã được <strong>xác nhận thành công</strong>.</p>
+            {GetBookingDetailsHtml(booking)}
+            <p>Hẹn gặp bạn tại khách sạn. Chúc bạn có một chuyến đi tuyệt vời! 🏨</p>
+        ";
+        string html = GetBaseEmailTemplate("Xác Nhận Đặt Phòng", content, "Xem chi tiết", $"http://localhost:5173/my-bookings", "#22c55e");
+        return SendAsync(booking.GuestEmail, subject, html);
     }
 
-    public Task SendBookingCancelledAsync(string toEmail, string guestName, string bookingId, string reason)
+    public Task SendBookingCancelledAsync(Booking booking)
     {
-        var subject = "❌ Thông báo: Đơn đặt phòng của bạn đã bị hủy";
-        var html = $@"
-<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto'>
-  <div style='background:#ef4444;color:white;padding:24px;border-radius:8px 8px 0 0'>
-    <h2 style='margin:0'>Đơn đặt phòng đã bị hủy</h2>
-  </div>
-  <div style='padding:24px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0 0 8px 8px'>
-    <p>Xin chào <strong>{guestName}</strong>,</p>
-    <p>Đơn đặt phòng <strong>#{bookingId[..8].ToUpper()}</strong> đã bị hủy.</p>
-    <div style='background:#fee2e2;border-radius:8px;padding:16px;margin:16px 0'>
-      <p style='margin:0'>Lý do: <strong>{reason}</strong></p>
-    </div>
-    <p style='color:#94a3b8;font-size:12px;margin-top:24px'>Email này được gửi tự động từ hệ thống HotelBooking.</p>
-  </div>
-</div>";
-        return SendAsync(toEmail, subject, html);
+        string subject = $"❌ Hủy đơn #{booking.Id.ToString()[..8].ToUpper()}";
+        string content = $@"
+            <p>Xin chào <strong>{booking.GuestName}</strong>,</p>
+            <p>Đơn đặt phòng của bạn tại <strong>{booking.Hotel?.Name}</strong> đã bị hủy.</p>
+            <div style='background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0;'>
+                <p style='margin: 0; color: #991b1b;'><strong>Lý do hủy:</strong> {booking.CancelReason}</p>
+            </div>
+            {GetBookingDetailsHtml(booking)}
+            <p>Nếu bạn có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ.</p>
+        ";
+        string html = GetBaseEmailTemplate("Đơn Đã Bị Hủy", content, "Xem lịch sử", $"http://localhost:5173/my-bookings", "#ef4444");
+        return SendAsync(booking.GuestEmail, subject, html);
     }
 
-    public Task SendDepositConfirmedAsync(string toEmail, string guestName, string bookingId, decimal depositAmount)
+    public Task SendDepositConfirmedAsync(Booking booking)
     {
-        var subject = "💰 Xác nhận: Đã nhận thanh toán đặt cọc";
-        var html = $@"
-<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto'>
-  <div style='background:#0ea5e9;color:white;padding:24px;border-radius:8px 8px 0 0'>
-    <h2 style='margin:0'>✅ Đã nhận tiền cọc</h2>
-  </div>
-  <div style='padding:24px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0 0 8px 8px'>
-    <p>Xin chào <strong>{guestName}</strong>,</p>
-    <p>Chúng tôi đã nhận được khoản thanh toán cọc cho đơn <strong>#{bookingId[..8].ToUpper()}</strong>.</p>
-    <div style='background:#dbeafe;border-radius:8px;padding:16px;margin:16px 0'>
-      <p style='margin:0'>💰 Số tiền đã cọc: <strong style='color:#0ea5e9;font-size:18px'>{depositAmount:N0} VNĐ</strong></p>
-    </div>
-    <p>Đơn của bạn đã được <strong>xác nhận</strong>. Chúc bạn có chuyến đi tuyệt vời! 🏨</p>
-    <p style='color:#94a3b8;font-size:12px;margin-top:24px'>Email này được gửi tự động từ hệ thống HotelBooking.</p>
-  </div>
-</div>";
-        return SendAsync(toEmail, subject, html);
+        string subject = $"💰 Xác nhận đã nhận cọc #{booking.Id.ToString()[..8].ToUpper()}";
+        string content = $@"
+            <p>Xin chào <strong>{booking.GuestName}</strong>,</p>
+            <p>Chúng tôi đã nhận được thanh toán cọc cho đơn đặt phòng của bạn.</p>
+            <div style='background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0;'>
+                <p style='margin: 0; color: #166534;'>Số tiền đã nhận: <strong>{booking.DepositAmount:N0} VNĐ</strong></p>
+            </div>
+            {GetBookingDetailsHtml(booking)}
+            <p>Đơn phòng của bạn hiện đã được <strong>Xác nhận</strong> an toàn.</p>
+        ";
+        string html = GetBaseEmailTemplate("Đã Nhận Tiền Cọc", content, "Xem chi tiết", $"http://localhost:5173/my-bookings", "#22c55e");
+        return SendAsync(booking.GuestEmail, subject, html);
     }
 
-    public Task SendDepositRefundedAsync(string toEmail, string guestName, string bookingId, decimal refundAmount)
+    public Task SendDepositRefundedAsync(Booking booking)
     {
-        var subject = "💸 Thông báo: Đã hoàn cọc cho bạn";
-        var html = $@"
-<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto'>
-  <div style='background:#8b5cf6;color:white;padding:24px;border-radius:8px 8px 0 0'>
-    <h2 style='margin:0'>💸 Thông báo Hoàn Cọc</h2>
-  </div>
-  <div style='padding:24px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0 0 8px 8px'>
-    <p>Xin chào <strong>{guestName}</strong>,</p>
-    <p>Chúng tôi đã xử lý hoàn trả tiền cọc cho đơn <strong>#{bookingId[..8].ToUpper()}</strong>.</p>
-    <div style='background:#ede9fe;border-radius:8px;padding:16px;margin:16px 0'>
-      <p style='margin:0'>💰 Số tiền hoàn: <strong style='color:#8b5cf6;font-size:18px'>{refundAmount:N0} VNĐ</strong></p>
-    </div>
-    <p>Số tiền sẽ được chuyển về tài khoản trong vòng <strong>3-5 ngày làm việc</strong>.</p>
-    <p style='color:#94a3b8;font-size:12px;margin-top:24px'>Email này được gửi tự động từ hệ thống HotelBooking.</p>
-  </div>
-</div>";
-        return SendAsync(toEmail, subject, html);
+        string subject = $"💸 Hoàn cọc đơn #{booking.Id.ToString()[..8].ToUpper()}";
+        string content = $@"
+            <p>Xin chào <strong>{booking.GuestName}</strong>,</p>
+            <p>Yêu cầu hoàn trả tiền cọc của bạn đã được xử lý thành công.</p>
+            <div style='background-color: #faf5ff; border-left: 4px solid #a855f7; padding: 15px; margin: 20px 0;'>
+                <p style='margin: 0; color: #6b21a8;'>Số tiền hoàn trả: <strong>{booking.RefundAmount?.ToString("N0") ?? "0"} VNĐ</strong></p>
+                <p style='margin: 8px 0 0; font-size: 14px;'>Tiền sẽ về tài khoản trong 3-5 ngày làm việc.</p>
+            </div>
+            {GetBookingDetailsHtml(booking)}
+        ";
+        string html = GetBaseEmailTemplate("Hoàn Cọc Thành Công", content, "Xem lịch sử", $"http://localhost:5173/my-bookings", "#a855f7");
+        return SendAsync(booking.GuestEmail, subject, html);
     }
-    public Task SendPostCheckoutThankYouAsync(string toEmail, string guestName, string bookingId, string hotelName, DateOnly checkOutDate)
+
+    public Task SendPostCheckoutThankYouAsync(Booking booking)
     {
-        var subject = string.Format("[BookNow] Cam on ban da luu tru tai {0}!", hotelName);
-        var checkOutStr = checkOutDate.ToString("dd/MM/yyyy");
-        var shortId = bookingId.Length >= 8 ? bookingId.Substring(0, 8).ToUpper() : bookingId.ToUpper();
-        var html = string.Format(@"<div style='font-family:Arial,sans-serif;max-width:600px;margin:auto'><div style='background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:32px;border-radius:12px 12px 0 0;text-align:center'><h2 style='margin:0'>Cam on ban da luu tru!</h2><p style='margin:8px 0 0;opacity:0.85;font-size:14px'>Hy vong ban co mot ky nghi tuyet voi</p></div><div style='padding:28px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:0 0 12px 12px'><p>Xin chao <strong>{0}</strong>,</p><p>Cam on ban da tin tuong lua chon <strong>{1}</strong> lam noi luu tru (Don <strong>#{2}</strong>).</p><div style='background:white;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:16px 0;text-align:center'><p style='margin:0;color:#6b7280;font-size:13px'>Ngay tra phong</p><p style='margin:4px 0 0;font-size:18px;font-weight:bold'>{3}</p></div><p>Chung toi mong duoc don tiep ban trong nhung chuyen di tiep theo!</p><div style='text-align:center;margin-top:24px'><a href='http://localhost:5173/my-bookings' style='display:inline-block;background:#6366f1;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold'>Xem lich su dat phong</a></div><p style='color:#94a3b8;font-size:12px;margin-top:24px;text-align:center'>Email nay duoc gui tu dong tu BookNow.</p></div></div>", guestName, hotelName, shortId, checkOutStr);
-        return SendAsync(toEmail, subject, html);
+        string subject = $"[BookNow] Cảm ơn bạn đã lưu trú tại {booking.Hotel?.Name}!";
+        string content = $@"
+            <p>Xin chào <strong>{booking.GuestName}</strong>,</p>
+            <p>Cảm ơn bạn đã tin tưởng lựa chọn <strong>{booking.Hotel?.Name}</strong> làm nơi lưu trú.</p>
+            {GetBookingDetailsHtml(booking)}
+            <p>Chúng tôi hy vọng bạn đã có một kỳ nghỉ tuyệt vời!</p>
+            <p>Để giúp chúng tôi phục vụ tốt hơn trong tương lai, cũng như chia sẻ trải nghiệm của bạn với các du khách khác, <strong>xin bớt chút thời gian để lại đánh giá về khách sạn nhé.</strong></p>
+        ";
+        string html = GetBaseEmailTemplate("Cảm Ơn Quý Khách", content, "Đánh giá ngay", $"http://localhost:5173/my-bookings", "#6366f1");
+        return SendAsync(booking.GuestEmail, subject, html);
     }
 }
